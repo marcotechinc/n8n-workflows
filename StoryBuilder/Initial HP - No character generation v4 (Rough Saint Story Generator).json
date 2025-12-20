@@ -1,0 +1,1464 @@
+{
+  "name": "Initial HP - No character generation v4 (Rough Saint Story Generator)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "User Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Saint",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -48
+      ],
+      "id": "586c8472-3b27-4203-85f1-51f00f441bb1",
+      "name": "On form submission",
+      "webhookId": "0150052f-caed-4545-84da-0ab329c630a8"
+    },
+    {
+      "parameters": {
+        "content": "## Task Analyzer + Scene Prompt Generator",
+        "height": 80,
+        "width": 620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2272,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "4219e400-ee97-44e3-aaf5-efb58f6febc7",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## User Form",
+        "height": 80,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -16,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "3e1b0aad-5c42-4ecf-b7dd-c186a8926b39",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Scene Generator",
+        "height": 80,
+        "width": 1820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4560,
+        384
+      ],
+      "typeVersion": 1,
+      "id": "113ba54b-58d3-4b15-b359-864c5284e947",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Save in Google Drive",
+        "height": 80,
+        "width": 860
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        5920,
+        672
+      ],
+      "typeVersion": 1,
+      "id": "5c811805-e2ca-4807-8bcc-5805d0bc4925",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2384,
+        672
+      ],
+      "id": "3f004e1c-2681-4876-9d75-1141e40e3d4f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiKey = $env.LEONARDO_API_KEY;\n\n// Request presigned upload URL for image (JPG)\nconst response = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://cloud.leonardo.ai/api/rest/v1/init-image',\n  headers: {\n    Authorization: `Bearer ${apiKey}`,\n    'Content-Type': 'application/json'\n  },\n  body: {\n    extension: 'jpg'\n  },\n  json: true\n});\n\nconst { id: initImageId, url: uploadUrl, fields } = response.uploadInitImage;\n\n// Return result as required by n8n (array of objects)\nreturn [\n  {\n    json: {\n      initImageId,\n      uploadUrl,\n      fields\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        80
+      ],
+      "id": "77ed5c9a-9c15-4a9a-8304-756fcf0dca8b",
+      "name": "Request Presigned URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.uploadUrl }}",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=Content-Type\t",
+              "value": "={{ $json.fields[\"Content-Type\"] }}"
+            },
+            {
+              "name": "bucket",
+              "value": "={{ $json.fields.bucket }}"
+            },
+            {
+              "name": "X-Amz-Algorithm",
+              "value": "={{ $json.fields[\"X-Amz-Algorithm\"] }}"
+            },
+            {
+              "name": "X-Amz-Credential",
+              "value": "={{ $json.fields[\"X-Amz-Credential\"] }}"
+            },
+            {
+              "name": "X-Amz-Date",
+              "value": "={{ $json.fields[\"X-Amz-Date\"] }}"
+            },
+            {
+              "name": "X-Amz-Security-Token",
+              "value": "={{ $json.fields[\"X-Amz-Security-Token\"] }}"
+            },
+            {
+              "name": "key",
+              "value": "={{ $json.fields.key }}"
+            },
+            {
+              "name": "Policy",
+              "value": "={{ $json.fields.Policy }}"
+            },
+            {
+              "name": "X-Amz-Signature\t",
+              "value": "={{ $json.fields[\"X-Amz-Signature\"] }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3040,
+        -48
+      ],
+      "id": "56c78c49-7469-44e0-b3e4-c67255db4048",
+      "name": "Upload to Presigned URL"
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = $json[\"fields\"];\n\nlet parsed;\n\ntry {\n  parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;\n} catch (e) {\n  throw new Error('Failed to parse fields: ' + e.message);\n}\n\nreturn [\n  {\n    json: {\n      ...$json,\n      fields: parsed\n    },\n    binary: $binary\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2528,
+        80
+      ],
+      "id": "affa5f39-10ae-4c6f-8251-0ab4c682cf7d",
+      "name": "Split fields object"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "image_base64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2288,
+        -128
+      ],
+      "id": "d5c2a40a-2a67-4081-9d90-6c9499fc6271",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2832,
+        -48
+      ],
+      "id": "920b2667-49bf-482c-a9a7-1272c9d353dc",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "=https://cloud.leonardo.ai/api/rest/v1/init-image/{{ $('Merge').item.json.initImageId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LEONARDO_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3472,
+        -48
+      ],
+      "id": "c96cae0c-fa50-4ebc-bee1-2971f8d5708a",
+      "name": "Poll for image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cloud.leonardo.ai/api/rest/v1/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LEONARDO_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $('Loop Over Scene Generation Prompts').item.json.prompt }}\",\n  \"negative_prompt\": \"{{ $('Loop Over Scene Generation Prompts').item.json.negative_prompt }}\",\n  \"modelId\": \"2067ae52-33fd-4a82-bb92-c2c55e7d2786\",\n  \"presetStyle\": \"ILLUSTRATION\",\n  \"scheduler\": \"LEONARDO\",\n  \"num_images\": 1,\n  \"guidance_scale\": 7,\n  \"num_inference_steps\": 30,\n  \"width\": 1368,\n  \"height\": 768,\n  \"seed\": 3926980335,\n  \"controlnets\": [\n    {\n      \"initImageId\": \"{{ $json.init_images_by_pk.id }}\",\n      \"initImageType\": \"UPLOADED\",\n      \"preprocessorId\": 133,\n      \"strengthType\": \"High\"\n    },\n    {\n      \"initImageId\": \"{{ $json.init_images_by_pk.id }}\",\n      \"initImageType\": \"UPLOADED\",\n      \"preprocessorId\": 67,\n      \"strengthType\": \"High\"\n    }\n  ]\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4624,
+        544
+      ],
+      "id": "cb5754ff-32fc-4c6e-897f-806a0f0deec5",
+      "name": "Generate Scene Image",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ff35ca74-88df-4e29-890e-411770e18f34",
+              "leftValue": "={{ $json.generations_by_pk.status }}",
+              "rightValue": "COMPLETE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5440,
+        544
+      ],
+      "id": "96f56b09-1e72-428a-aa13-3911c4ac8a83",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://cloud.leonardo.ai/api/rest/v1/generations/{{\n  $node[\"Store Generation ID\"].json[\"generationId\"] || \n  $node[\"Generate Scene Image\"].json[\"sdGenerationJob\"][\"generationId\"]\n}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LEONARDO_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5232,
+        528
+      ],
+      "id": "4e330788-59f3-478b-beee-b2f625810c04",
+      "name": "Poll Generation Status"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3264,
+        -48
+      ],
+      "id": "bc10a140-5ed0-48b2-9ab9-0c2fb0a40d7b",
+      "name": "Wait for character image upload",
+      "webhookId": "bad066e0-3a7d-4092-ae9e-361b871f6a15"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5680,
+        720
+      ],
+      "id": "70dfc2e8-6d5d-47ba-847c-646a23974226",
+      "name": "Wait for image generation",
+      "webhookId": "97476edc-7a93-4bc5-89a3-f0173edbc48a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1c80653e-53ed-4c46-9ce5-f7767eb8ed72",
+              "name": "generationId",
+              "value": "={{ $json.sdGenerationJob.generationId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4992,
+        528
+      ],
+      "id": "35775029-948c-4509-a275-fbe32598d88b",
+      "name": "Store Generation ID"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        5984,
+        832
+      ],
+      "id": "576b3eff-8780-4d32-aac3-c6889ff76146",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4lEBy7qEfA2UCGII",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Prepare Character Image",
+        "height": 80,
+        "width": 3620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        272,
+        -464
+      ],
+      "typeVersion": 1,
+      "id": "348b521a-f8ad-4d09-b7b1-5eb6cb3230ec",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22e6f8e9-7fb5-40a9-bff0-8f43ef9eaba1",
+              "name": "init_images_by_pk.id",
+              "value": "={{ $json.init_images_by_pk.id }}",
+              "type": "string"
+            },
+            {
+              "id": "e4edbd77-0a3f-4a48-b2ed-88b2da2f532c",
+              "name": "init_images_by_pk.createdAt",
+              "value": "={{ $json.init_images_by_pk.createdAt }}",
+              "type": "string"
+            },
+            {
+              "id": "2a34b3a1-f43f-445e-8fad-147670c03636",
+              "name": "init_images_by_pk.url",
+              "value": "={{ $json.init_images_by_pk.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3712,
+        64
+      ],
+      "id": "38e9ab45-bb36-4508-a018-02d12e3a5411",
+      "name": "Set init_image"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        4032,
+        464
+      ],
+      "id": "7939073f-d51d-4284-9350-74dc33b3fb95",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        368,
+        144
+      ],
+      "id": "804d49ba-a752-4666-b2c3-57dc4e9fade6",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a visual character profile for the following saint:\n\nSaint: {{ $json.Saint }}\n\nUse the schema shown above and include only visual features.\nIf the saint is a priest or religious, describe them wearing a cassock, habit, or robe instead of modern clothing.\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a character description generator for illustrated children's saint stories. Your job is to create a simple, visual character profile for a Catholic saint.\n\nEach profile must include:\n- name\n- age (estimated or symbolic)\n- gender\n- visual appearance (hair, eyes, skin tone)\n- facial expression\n- posture\n- simple, saint-appropriate clothing (e.g., cassock, robe, habit)\n- overall impression\n\nUse child-friendly, visual language. Focus on what can be seen. Avoid abstract or theological concepts.\n\nReturn a valid JSON object with this structure:\n\n{\n  \"character\": {\n    \"name\": \"<full name of the saint>\",\n    \"age\": <estimated age as a number>,\n    \"gender\": \"<male or female>\",\n    \"appearance\": {\n      \"hair\": \"<brief hair description>\",\n      \"eyes\": \"<brief eye description>\",\n      \"skin\": \"<brief skin tone description>\",\n      \"expression\": \"<facial expression>\",\n      \"clothing\": {\n        \"cassock\": \"<if priest or religious brother>\",\n        \"habit\": \"<if nun or religious sister>\",\n        \"robe\": \"<if saint is monastic or early Church>\",\n        \"shirt\": \"<optional fallback if non-religious>\",\n        \"coat\": \"<optional fallback outerwear>\"\n      },\n      \"posture\": \"<how the saint carries themselves>\",\n      \"overall_impression\": \"<one-sentence summary of their visual presence>\"\n    }\n  }\n}\n\nReturn valid JSON only. No commentary.\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        288,
+        -48
+      ],
+      "id": "3efd25f6-84f5-48bd-a43e-3da19fb72452",
+      "name": "Saint Character Details"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Using the following context:\n\n- Saint: {{ $json.character.name }}\n- Character: {{ $json.character.name }}, {{ $json.character.age }}-year-old {{ $json.character.gender }} with {{ $json.character.appearance.hair }}, {{ $json.character.appearance.eyes }}, and {{ $json.character.appearance.skin }}. Clothing includes: \n{{ $json.character.appearance.clothing.cassock || $json.character.appearance.clothing.habit || $json.character.appearance.clothing.robe || ($json.character.appearance.clothing.shirt + ' and ' + $json.character.appearance.clothing.coat) }}.\nPosture: {{ $json.character.appearance.posture }}.\n\nCreate a visual story about {{ $json.character.name }}. Break it into 5–7 visual moments, following the formatting and structure below.\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a visual prompt generator for a Catholic children’s storytelling tool. Given a saint's character profile and context, create a 5–7 step **visual story** sequence.\n\nEach item must be a standalone, vivid moment that can be clearly illustrated:\n\n- Include setting, action, props, emotion, and POV (e.g., “side view”, “over-the-shoulder”)\n- The saint must be **doing something**, not just standing\n- Focus on **visible events**: scenes with other characters, gestures, expressions, interactions, historical moments\n- Keep clothing exactly as described (cassock, robe, habit, armor, etc.)\n- Avoid modern styles or unclear symbolism\n\nReturn only a JSON array. Each object must contain:\n- `scene_number`: number\n- `scene_name`: 3–5 word title (e.g., “Joan Rallies Troops”)\n- `prompt`: rich scene description\n- `negative_prompt`: “dark, messy, stylized, surreal, toy-like, chaotic, disrespectful”\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        2288,
+        480
+      ],
+      "id": "5feac7a4-0a5f-4976-9ba5-81b11b51a955",
+      "name": "Story Generator"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $json[\"text\"];\n\n// Clean and parse JSON\nconst cleaned = rawText.replace(/```json|```/g, \"\").trim();\nconst parsed = JSON.parse(cleaned);\n\n// Return as-is (wrap in array so n8n continues processing)\nreturn [{ json: parsed }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        -48
+      ],
+      "id": "dde43c70-555e-41b4-b3cb-0d93b25368d9",
+      "name": "Fix JSON for character details"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $json[\"text\"];\n\n// Strip markdown code block if present\nconst cleaned = rawText.replace(/```json|```/g, \"\").trim();\n\n// Parse JSON\nconst parsed = JSON.parse(cleaned);\n\n// Return one item per loop\nreturn parsed.map(scene => ({ json: scene }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        480
+      ],
+      "id": "00e1b9ec-4adc-45c8-a95a-ec75cebbdfe5",
+      "name": "Fix JSON for story generator"
+    },
+    {
+      "parameters": {
+        "jsCode": "const char = items[0].json.character;\nconst app = char.appearance;\n\nconst prompt = `Create a Pixar-style 3D character image. The rendering should be expressive, colorful, soft-edged, and emotionally engaging — consistent with the animation style of Pixar films.\n\nShow only one character, facing forward. Do not include multiple views, side angles, or duplicate faces.\n\nA ${char.age}-year-old ${char.gender} named ${char.name}, with ${app.hair}, ${app.eyes}, and ${app.skin}. He has a ${app.expression} and wears a ${app.clothing.cassock}. His posture is ${app.posture}. Overall, he gives the impression of ${app.overall_impression}.`;\n\nreturn [{ json: { prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -208
+      ],
+      "id": "bdd12ae5-0668-4617-8602-d5f12c19a75c",
+      "name": "Build Character Generation Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $json.model }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            },
+            {
+              "name": "n",
+              "value": "={{ $json.n }}"
+            },
+            {
+              "name": "size",
+              "value": "={{ $json.size }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        -160
+      ],
+      "id": "6d4228e1-5957-4dfe-847a-a35722c4dbaf",
+      "name": "Generate Character Image",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prompt = $json.prompt; // or wherever yours is\n\nreturn [\n  {\n    json: {\n      model: \"dall-e-3\",\n      prompt,\n      n: 1,\n      size: \"1024x1024\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -208
+      ],
+      "id": "95e11fab-8dd8-4e13-beb6-0f085fac0dcb",
+      "name": "Build Image Generation Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "const imageUrl = $input.first().json.image_url;\n\n// Download the image as binary\nconst imageBuffer = await this.helpers.request({\n  method: 'GET',\n  url: imageUrl,\n  encoding: null // Return raw binary buffer\n});\n\n// Convert to base64 (no prefix)\nconst imageBase64 = imageBuffer.toString('base64');\n\n// Return for next step (Leonardo upload)\nreturn [\n  {\n    json: {\n      image_base64: imageBase64\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        -128
+      ],
+      "id": "cf1c5b3e-3e21-47ab-b787-f0f4d2e8ecb7",
+      "name": "Download character image (OpenAI)"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    image_url: $json.data[0].url\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        -160
+      ],
+      "id": "232d9d32-b4b9-4e3e-8277-977e19ac1019",
+      "name": "Extract image url"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json[\"generations_by_pk\"][\"generated_images\"][0][\"url\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5680,
+        528
+      ],
+      "id": "9e2ca2dd-fe05-46de-b514-bb43d33d5019",
+      "name": "Download Scene Image"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.image_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1968,
+        -320
+      ],
+      "id": "6f831417-3d40-4183-bf06-31363e22b894",
+      "name": "Download Character Image"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2192,
+        -320
+      ],
+      "id": "7c781a76-b83c-40d2-aa19-af3168ef90b2",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4lEBy7qEfA2UCGII",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Packaging (After loop)",
+        "height": 80,
+        "width": 1720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4480,
+        -64
+      ],
+      "typeVersion": 1,
+      "id": "5a959ed9-1df4-4d5d-a29a-0fea36dadd40",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const files = items.map(item => item.json);\n\n// Try to extract saint name from first file\nlet title = \"Untitled Story\";\nconst match = files[0]?.name?.match(/Saint_([A-Za-z]+)/);\nif (match) {\n  title = `Saint ${match[1]}'s Story`;\n}\n\nconst slides = files.map((file, index) => {\n  const imageUrl = `https://drive.google.com/uc?id=${file.id}&export=download`;\n\n  const name = file.name || `Image_${index + 1}`;\n  const raw = name\n    .replace(\".jpg\", \"\")\n    .replace(/^AlbedoBase_XL_/, \"\")\n    .replace(/_/g, \" \");\n\n  const caption = `Scene ${index + 1}: ${raw}`;\n\n  return {\n    imageUrl,\n    caption,\n  };\n});\n\nreturn [\n  {\n    json: {\n      title,\n      slides,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4528,
+        64
+      ],
+      "id": "a60bc92a-cd96-4380-8b7b-63f9b476bb17",
+      "name": "Prepare Slides Data"
+    },
+    {
+      "parameters": {
+        "title": "={{ $json.title }}"
+      },
+      "type": "n8n-nodes-base.googleSlides",
+      "typeVersion": 2,
+      "position": [
+        4704,
+        208
+      ],
+      "id": "891bdf1a-4f82-4274-92ed-1a7b1fb3a889",
+      "name": "Google Slides",
+      "credentials": {
+        "googleSlidesOAuth2Api": {
+          "id": "3ALxij02ZK5ZvDbM",
+          "name": "Google Slides account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4288,
+        464
+      ],
+      "id": "69b7f0c3-f85f-4de1-af1f-a47e44df9eee",
+      "name": "Loop Over Scene Generation Prompts"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        5760,
+        80
+      ],
+      "id": "5c4653b5-2771-4875-9834-a6f542beb836",
+      "name": "Loop Over Scene Slides to Create"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "53772888-953c-4c79-87c2-a8b027757202",
+              "name": "presentationId",
+              "value": "={{ $json.presentationId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4912,
+        208
+      ],
+      "id": "816a81fb-9d3b-46f8-b661-4c9d81cd223a",
+      "name": "Get PresentationID"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        5072,
+        80
+      ],
+      "id": "333f1549-762d-4c44-9d91-6edb2754b6f1",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const story = items.find(i => i.json.slides);\nconst pres = items.find(i => i.json.presentationId);\n\nreturn [\n  {\n    json: {\n      ...story.json,\n      presentationId: pres.json.presentationId\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5280,
+        80
+      ],
+      "id": "21f4cca1-130a-4e52-afe8-ad7ae03912ed",
+      "name": "Fix data for presentation",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const { slides, presentationId } = items[0].json;\n\nreturn slides.map((slide, index) => ({\n  json: {\n    ...slide,\n    presentationId,\n    slideIndex: index + 1\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5520,
+        80
+      ],
+      "id": "42823d2c-5057-4912-95bb-4579146fec85",
+      "name": "Flatten for looping"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://slides.googleapis.com/v1/presentations/{{ $json.presentationId }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSlidesOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"requests\": [\n    {\n      \"createSlide\": {\n        \"objectId\": \"slide_{{$json.slideIndex}}\",\n        \"insertionIndex\": {{$json.slideIndex}},\n        \"slideLayoutReference\": {\n          \"predefinedLayout\": \"BLANK\"\n        }\n      }\n    },\n    {\n      \"createImage\": {\n        \"url\": \"{{$json.imageUrl}}\",\n        \"elementProperties\": {\n          \"pageObjectId\": \"slide_{{$json.slideIndex}}\",\n          \"size\": {\n            \"height\": { \"magnitude\": 3000000, \"unit\": \"EMU\" },\n            \"width\": { \"magnitude\": 5000000, \"unit\": \"EMU\" }\n          },\n          \"transform\": {\n            \"scaleX\": 1,\n            \"scaleY\": 1,\n            \"translateX\": 100000,\n            \"translateY\": 100000,\n            \"unit\": \"EMU\"\n          }\n        }\n      }\n    },\n    {\n      \"createShape\": {\n        \"objectId\": \"caption_{{$json.slideIndex}}\",\n        \"shapeType\": \"TEXT_BOX\",\n        \"elementProperties\": {\n          \"pageObjectId\": \"slide_{{$json.slideIndex}}\",\n          \"size\": {\n            \"height\": { \"magnitude\": 500000, \"unit\": \"EMU\" },\n            \"width\": { \"magnitude\": 5000000, \"unit\": \"EMU\" }\n          },\n          \"transform\": {\n            \"scaleX\": 1,\n            \"scaleY\": 1,\n            \"translateX\": 100000,\n            \"translateY\": 3200000,\n            \"unit\": \"EMU\"\n          }\n        }\n      }\n    },\n    {\n      \"insertText\": {\n        \"objectId\": \"caption_{{$json.slideIndex}}\",\n        \"insertionIndex\": 0,\n        \"text\": \"{{$json.caption}}\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6032,
+        160
+      ],
+      "id": "ce5cf751-4e2e-4f12-9d29-b97ec32a31ad",
+      "name": "Create Slide",
+      "credentials": {
+        "googleSlidesOAuth2Api": {
+          "id": "3ALxij02ZK5ZvDbM",
+          "name": "Google Slides account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.id }}/permissions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"role\": \"reader\",\n  \"type\": \"anyone\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6224,
+        832
+      ],
+      "id": "b171a9b9-4585-4e29-a244-edede4c07d5e",
+      "name": "Make Image Public",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4lEBy7qEfA2UCGII",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        6384,
+        1072
+      ],
+      "id": "e2742433-e442-4f76-ace3-2dae4115b019",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out permission-only items (e.g. anyoneWithLink)\n// Keep only file metadata with actual image IDs\nconst cleaned = items.filter(item => {\n  return item.json.mimeType === 'image/jpeg' && item.json.id && item.json.name;\n}).map(item => {\n  return {\n    json: {\n      id: item.json.id,\n      name: item.json.name,\n    }\n  };\n});\n\nreturn cleaned;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6544,
+        1072
+      ],
+      "id": "8e8149c7-63be-4aec-8e98-fa61815dbe2a",
+      "name": "Clean-up"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Saint Character Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Story Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Presigned URL": {
+      "main": [
+        [
+          {
+            "node": "Split fields object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split fields object": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Upload to Presigned URL": {
+      "main": [
+        [
+          {
+            "node": "Wait for character image upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Upload to Presigned URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll for image": {
+      "main": [
+        [
+          {
+            "node": "Set init_image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Scene Image": {
+      "main": [
+        [
+          {
+            "node": "Store Generation ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Download Scene Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for image generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Generation Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for character image upload": {
+      "main": [
+        [
+          {
+            "node": "Poll for image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for image generation": {
+      "main": [
+        [
+          {
+            "node": "Store Generation ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Generation ID": {
+      "main": [
+        [
+          {
+            "node": "Poll Generation Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Make Image Public",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Set init_image": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Scene Generation Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Saint Character Details",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Story Generator": {
+      "main": [
+        [
+          {
+            "node": "Fix JSON for story generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saint Character Details": {
+      "main": [
+        [
+          {
+            "node": "Fix JSON for character details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix JSON for character details": {
+      "main": [
+        [
+          {
+            "node": "Story Generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Request Presigned URL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Character Generation Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix JSON for story generator": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Build Character Generation Prompt": {
+      "main": [
+        [
+          {
+            "node": "Build Image Generation Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Character Image": {
+      "main": [
+        [
+          {
+            "node": "Extract image url",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image Generation Payload": {
+      "main": [
+        [
+          {
+            "node": "Generate Character Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download character image (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract image url": {
+      "main": [
+        [
+          {
+            "node": "Download character image (OpenAI)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Download Character Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Scene Image": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Character Image": {
+      "main": [
+        [
+          {
+            "node": "Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Slides Data": {
+      "main": [
+        [
+          {
+            "node": "Google Slides",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Slides": {
+      "main": [
+        [
+          {
+            "node": "Get PresentationID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Scene Generation Prompts": {
+      "main": [
+        [
+          {
+            "node": "Prepare Slides Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Scene Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Scene Slides to Create": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create Slide",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PresentationID": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fix data for presentation": {
+      "main": [
+        [
+          {
+            "node": "Flatten for looping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Fix data for presentation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten for looping": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Scene Slides to Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Slide": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Scene Slides to Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Image Public": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Clean-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean-up": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Scene Generation Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8d9e53d1-ea76-4142-8a93-02a1ca563660",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "dtSg5P1iisGnpbxc",
+  "tags": [
+    {
+      "updatedAt": "2025-05-17T17:53:06.626Z",
+      "createdAt": "2025-05-17T17:53:06.626Z",
+      "id": "cRs4n3u2lESNBFK6",
+      "name": "Story Builder"
+    }
+  ]
+}

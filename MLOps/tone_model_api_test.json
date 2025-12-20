@@ -1,0 +1,76 @@
+{
+  "name": "tone_model_api_test",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Tone Model API Test",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Text",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e77b9dca-c61d-4c25-8def-e68ae555fcdb",
+      "name": "On form submission",
+      "webhookId": "b24530f1-464a-438f-a330-a4662443db5e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mlops-production-591e.up.railway.app/predict",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.Text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "37994915-5706-4f19-a3b4-f1dd82152584",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5fca0551-ec23-4ed4-a8eb-88b7b85c4332",
+  "meta": {
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "n0TCUE5T68IRlTT2",
+  "tags": []
+}

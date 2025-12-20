@@ -1,0 +1,1221 @@
+{
+  "name": "ingest_feeds",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        320
+      ],
+      "id": "300ef6b7-c4b9-4f67-8def-6eedcb0b903e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\n\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    url: entry.link,\n    date: entry.pubDate,\n    source: \"TechCrunch\",\n    content: entry.description,\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "cd7037e8-edf2-4193-a931-080931e0efcc",
+      "name": "TechCrunch: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7c8824be-9642-480d-8fb8-1d5ca91812a1",
+      "name": "TechCrunch: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b2db076b-8840-456c-b351-e518f34ba390",
+      "name": "TechCrunch: Convert to XML"
+    },
+    {
+      "parameters": {
+        "url": "https://www.ft.com/rss/technology",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "f08a5379-3d23-4b82-ad56-7f5ffb8ecd11",
+      "name": "FT Tech: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        208,
+        240
+      ],
+      "id": "4b583157-98a5-4b05-9c30-29bc93d1b7d9",
+      "name": "FT Tech: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    date: entry.pubDate,\n    url: entry.link,\n    source: \"FT Tech\",\n    content: entry.description,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        240
+      ],
+      "id": "c60e1349-ef4e-458b-b15b-f36129636b0d",
+      "name": "FT Tech: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        448
+      ],
+      "id": "d1b1c0ab-65eb-4845-80ec-29eb6bff5dd1",
+      "name": "CoinDesk: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        192,
+        448
+      ],
+      "id": "00fef001-ba9d-4e88-b51e-ceec4ea4f992",
+      "name": "CoinDesk: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    date: entry.pubDate,\n    url: entry.link,\n    source: \"CoinDesk\",\n    content: entry.description,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        448
+      ],
+      "id": "8cff6f09-4144-4cb3-afe1-89fb56dfaad0",
+      "name": "CoinDesk: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        656
+      ],
+      "id": "2dae9edb-88d6-40af-a5db-1b177098b4ea",
+      "name": "Hacker News: Top Stories API"
+    },
+    {
+      "parameters": {
+        "batchSize": 20,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        192,
+        656
+      ],
+      "id": "9d5a262f-b99e-43ed-9b3a-3ec2a208cd3b",
+      "name": "Hacker News: Loop Over Stories"
+    },
+    {
+      "parameters": {
+        "url": "=https://hacker-news.firebaseio.com/v0/item/{{$json}}.json",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        768
+      ],
+      "id": "8f573532-73da-4ab9-98df-4c39946ab290",
+      "name": "HackerNews: Fetch Story Details"
+    },
+    {
+      "parameters": {
+        "jsCode": "function cleanContent(str) {\n  if (!str) return \"\";\n  // Replace <a href=\"URL\">text</a> → text (URL)\n  str = str.replace(/<a [^>]*href=\"([^\"]+)\"[^>]*>(.*?)<\\/a>/gi, '$2 ($1)');\n  // Remove any remaining tags and entities\n  return str\n    .replace(/<[^>]*>/g, \"\")\n    .replace(/&[#A-Za-z0-9]+;/g, \"\")\n    .trim();\n}\n\nreturn items.map(item => ({\n  json: {\n    title: item.json.title || \"(no title)\",\n    date: new Date((item.json.time || 0) * 1000).toISOString(),\n    source: \"Hacker News\",\n    url: item.json.url || \"\",\n    content: cleanContent(item.json.text || \"\")\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        768
+      ],
+      "id": "8252f196-5987-446f-8918-c606fe4731a4",
+      "name": "Hacker News: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "tableId": "feeds",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.output.title }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $json.output.date }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.output.source }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.output.content }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $json.output.topic }}"
+            },
+            {
+              "fieldId": "tone_llm",
+              "fieldValue": "={{ $json.output.tone }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $json.output.category }}"
+            },
+            {
+              "fieldId": "tone_ml"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        336
+      ],
+      "id": "fa6de7d8-5010-44b7-80be-0f08b827f51a",
+      "name": "Hacker News: Insert to DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "tableId": "feeds",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.output.title }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.output.source }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.output.content }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $json.output.topic }}"
+            },
+            {
+              "fieldId": "tone",
+              "fieldValue": "={{ $json.output.tone }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $json.output.category }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $json.output.date }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        336
+      ],
+      "id": "fce3b2d7-83a9-4340-8468-afde636367b9",
+      "name": "Insert feed into DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        16
+      ],
+      "id": "e4193cbd-a521-4d4f-92d6-2ae18e0af91f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"OpenAI launches new agent platform\",\n  \"url\": \"https://techcrunch.com/example\",\n  \"date\": \"2025-10-06\",\n  \"source\": \"TechCrunch\",\n  \"content\": \"OpenAI announced AgentKit, a toolkit to help developers build and deploy AI agents.\",\n  \"topic\": \"AI\",\n  \"tone\": \"positive\",\n  \"category\": \"Product Launch\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        32
+      ],
+      "id": "9ac288d2-50ca-424f-b41f-fa4eb40183d7",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following article and append three new fields.\n\nLabel options:\n- topic: [AI, Blockchain, Cybersecurity, Big Tech, Other]\n- tone: [positive, neutral, negative]\n- category: [Product Launch, Funding, Opinion, Market Report, Research, Regulation, Other]\n\nArticle:\nTitle: {{$json[\"title\"]}}\nDate: {{$json[\"date\"]}}\nSource: {{$json[\"source\"]}}\nURL: {{$json[\"url\"]}}\nContent: {{$json[\"content\"] || $json[\"title\"]}}\n\nReturn JSON in this exact structure:\n{\n  \"title\": \"{{$json[\"title\"]}}\",\n  \"date\": \"{{$json[\"date\"]}}\",\n  \"source\": \"{{$json[\"source\"]}}\",\n  \"content\": \"{{$json[\"content\"] || $json[\"title\"]}}\",\n  \"url\": \"{{$json[\"url\"]}}\",\n  \"topic\": \"<one from list>\",\n  \"tone\": \"<one from list>\",\n  \"category\": \"<one from list>\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a structured classification assistant. You receive one article at a time with fields like title, date, source, and content.Return the same article plus three new fields: topic, tone, and category.Use only the allowed labels and return valid JSON.Do not summarize, explain, or change existing fields."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        800,
+        768
+      ],
+      "id": "0f09b841-c975-4d25-b2fa-4b4aab9bb4df",
+      "name": "Enrich Signal II"
+    },
+    {
+      "parameters": {
+        "url": "https://news.yahoo.com/rss/tech",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        -208
+      ],
+      "id": "b994f3d5-534a-4e69-a51f-4f1403f272a8",
+      "name": "Yahoo Tech: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -208
+      ],
+      "id": "d8610525-30b8-4e89-8f55-219e24cd54c6",
+      "name": "Yahoo Tech: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json.rss.channel.item;\n\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    url: entry.link,\n    date: entry.pubDate,\n    source: entry.source?._ || entry.source || \"Yahoo\",\n    content: entry.description || entry[\"content:encoded\"] || \"\", // will be \"\"\n    image: entry[\"media:content\"]?.url || \"\"\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -208
+      ],
+      "id": "f35fe098-9ef1-4642-b067-988be01fbdc0",
+      "name": "Yahoo Tech: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "tableId": "feeds",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.title }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.source }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.content }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.topic }}"
+            },
+            {
+              "fieldId": "tone_llm",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.tone_llm }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.category }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $('Flatten LLM Output - RSS').item.json.date }}"
+            },
+            {
+              "fieldId": "tone_ml",
+              "fieldValue": "={{ $json.tone }}"
+            },
+            {
+              "fieldId": "tone_model_v",
+              "fieldValue": "={{ $json.tone_model_v }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -32
+      ],
+      "id": "1d85b06b-9626-461b-86e9-3d47da184dc2",
+      "name": "Insert feed into DB_RSS",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following article and append three new fields.\n\nLabel options:\n- topic: [AI, Blockchain, Cybersecurity, Big Tech, Other]\n- tone: [positive, neutral, negative]\n- category: [Product Launch, Funding, Opinion, Market Report, Research, Regulation, Other]\n\nArticle:\nTitle: {{$json[\"title\"]}}\nDate: {{$json[\"date\"]}}\nSource: {{$json[\"source\"]}}\nURL: {{$json[\"url\"]}}\nContent: {{$json[\"content\"] || $json[\"title\"]}}\n\nReturn JSON in this exact structure:\n{\n  \"title\": \"{{$json[\"title\"]}}\",\n  \"date\": \"{{$json[\"date\"]}}\",\n  \"source\": \"{{$json[\"source\"]}}\",\n  \"content\": \"{{$json[\"content\"] || $json[\"title\"]}}\",\n  \"url\": \"{{$json[\"url\"]}}\",\n  \"topic\": \"<one from list>\",\n  \"tone\": \"<one from list>\",\n  \"category\": \"<one from list>\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a structured classification assistant.\nYou receive one article at a time with fields like title, date, source, and content.\nReturn the same article plus three new fields: topic, tone, and category.\nUse only the allowed labels and return valid JSON.\nDo not summarize, explain, or change existing fields."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        768,
+        -208
+      ],
+      "id": "d599d596-f7e6-4167-92b9-6213d67ab48a",
+      "name": "Enrich Signal_Yahoo"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        560
+      ],
+      "id": "5453e1dd-dca8-480a-86c3-578fcdfd2863",
+      "name": "OpenAI Chat Model_HN",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"OpenAI launches new agent platform\",\n  \"url\": \"https://techcrunch.com/example\",\n  \"date\": \"2025-10-06\",\n  \"source\": \"TechCrunch\",\n  \"content\": \"OpenAI announced AgentKit, a toolkit to help developers build and deploy AI agents.\",\n  \"topic\": \"AI\",\n  \"tone\": \"positive\",\n  \"category\": \"Product Launch\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        576
+      ],
+      "id": "267bbd50-8268-4272-a176-b81fd5629d71",
+      "name": "Structured Output Parser_HN"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following article and append three new fields.\n\nLabel options:\n- topic: [AI, Blockchain, Cybersecurity, Big Tech, Other]\n- tone: [positive, neutral, negative]\n- category: [Product Launch, Funding, Opinion, Market Report, Research, Regulation, Other]\n\nArticle:\nTitle: {{$json[\"title\"]}}\nDate: {{$json[\"date\"]}}\nSource: {{$json[\"source\"]}}\nURL: {{$json[\"url\"]}}\nContent: {{$json[\"content\"]}}\n\nReturn JSON in this exact structure:\n{\n  \"title\": \"{{$json[\"title\"]}}\",\n  \"date\": \"{{$json[\"date\"]}}\",\n  \"source\": \"{{$json[\"source\"]}}\",\n  \"content\": \"{{$json[\"content\"]}}\",\n  \"url\": \"{{$json[\"url\"]}}\",\n  \"topic\": \"<one from list>\",\n  \"tone\": \"<one from list>\",\n  \"category\": \"<one from list>\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a structured classification assistant.\nYou receive one article at a time with fields like title, date, source, and content.\nReturn the same article plus three new fields: topic, tone, and category.\nUse only the allowed labels and return valid JSON.\nDo not summarize, explain, or change existing fields."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        784,
+        208
+      ],
+      "id": "d391da3f-af25-4c1e-b960-c80986804068",
+      "name": "Enrich Signal_RSS"
+    },
+    {
+      "parameters": {
+        "content": "Old DB feed inserts",
+        "height": 256,
+        "width": 496
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1536,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "88b0e834-971d-4aa1-b69a-7565d810d861",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mlops-production-591e.up.railway.app/predict",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1408,
+        -32
+      ],
+      "id": "f9cdc354-f98f-4cda-b1b9-5a4fc463d41a",
+      "name": "Tone Model - RSS",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "EvCWRfZ6FTAWzzvT",
+          "name": "tone-api-key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "257403fe-af97-45ce-815f-baf322aca2b2",
+              "name": "title",
+              "value": "={{ $json.output.title }}",
+              "type": "string"
+            },
+            {
+              "id": "393a07fc-ce00-4fed-a72f-ebd2258f7c4f",
+              "name": "content",
+              "value": "={{ $json.output.content }}",
+              "type": "string"
+            },
+            {
+              "id": "152fbe6a-ea4b-46cf-aca0-4cccee81d167",
+              "name": "tone_llm",
+              "value": "={{ $json.output.tone }}",
+              "type": "string"
+            },
+            {
+              "id": "5adf5bc6-a95b-4615-971c-714adc69e7a5",
+              "name": "topic",
+              "value": "={{ $json.output.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "283cfbf1-d114-40df-8492-b0cf8db38107",
+              "name": "category",
+              "value": "={{ $json.output.category }}",
+              "type": "string"
+            },
+            {
+              "id": "fd5acd7a-93ac-448b-8747-dc8d539f4dc6",
+              "name": "url",
+              "value": "={{ $json.output.url }}",
+              "type": "string"
+            },
+            {
+              "id": "9dd9998e-012e-44d7-97d6-fd3491763aeb",
+              "name": "date",
+              "value": "={{ $json.output.date }}",
+              "type": "string"
+            },
+            {
+              "id": "62f5c7e1-0ec3-4669-b9be-6c3daa5bc5a9",
+              "name": "source",
+              "value": "={{ $json.output.source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        -32
+      ],
+      "id": "be3f4ecc-e3d5-413d-b39d-ccde739c7fd3",
+      "name": "Flatten LLM Output - RSS"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "257403fe-af97-45ce-815f-baf322aca2b2",
+              "name": "title",
+              "value": "={{ $json.output.title }}",
+              "type": "string"
+            },
+            {
+              "id": "393a07fc-ce00-4fed-a72f-ebd2258f7c4f",
+              "name": "content",
+              "value": "={{ $json.output.content }}",
+              "type": "string"
+            },
+            {
+              "id": "152fbe6a-ea4b-46cf-aca0-4cccee81d167",
+              "name": "tone_llm",
+              "value": "={{ $json.output.tone }}",
+              "type": "string"
+            },
+            {
+              "id": "5adf5bc6-a95b-4615-971c-714adc69e7a5",
+              "name": "topic",
+              "value": "={{ $json.output.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "283cfbf1-d114-40df-8492-b0cf8db38107",
+              "name": "category",
+              "value": "={{ $json.output.category }}",
+              "type": "string"
+            },
+            {
+              "id": "fd5acd7a-93ac-448b-8747-dc8d539f4dc6",
+              "name": "url",
+              "value": "={{ $json.output.url }}",
+              "type": "string"
+            },
+            {
+              "id": "9dd9998e-012e-44d7-97d6-fd3491763aeb",
+              "name": "date",
+              "value": "={{ $json.output.date }}",
+              "type": "string"
+            },
+            {
+              "id": "62f5c7e1-0ec3-4669-b9be-6c3daa5bc5a9",
+              "name": "source",
+              "value": "={{ $json.output.source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        768
+      ],
+      "id": "1da9f063-dbe2-4ef5-8fb0-4e220962d667",
+      "name": "Flatten LLM Output - HN"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mlops-production-591e.up.railway.app/predict",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1392,
+        768
+      ],
+      "id": "ff56d605-0022-47df-aeaf-e70be42968a6",
+      "name": "Tone Model - HN"
+    },
+    {
+      "parameters": {
+        "tableId": "feeds",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.title }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.source }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.content }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.topic }}"
+            },
+            {
+              "fieldId": "tone_llm",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.tone_llm }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.category }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $('Flatten LLM Output - HN').item.json.date }}"
+            },
+            {
+              "fieldId": "tone_ml",
+              "fieldValue": "={{ $json.tone }}"
+            },
+            {
+              "fieldId": "tone_model_v",
+              "fieldValue": "={{ $json.tone_model_v }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        768
+      ],
+      "id": "28f63240-a85e-4770-ab09-fa8d5362d439",
+      "name": "Insert feed into DB_HN",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Hacker News: Top Stories API",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TechCrunch: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FT Tech: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CoinDesk: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Yahoo Tech: Fetch RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "TechCrunch: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "TechCrunch: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FT Tech: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "FT Tech: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FT Tech: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "FT Tech: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FT Tech: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoinDesk: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "CoinDesk: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoinDesk: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "CoinDesk: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoinDesk: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News: Top Stories API": {
+      "main": [
+        [
+          {
+            "node": "Hacker News: Loop Over Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News: Loop Over Stories": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HackerNews: Fetch Story Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HackerNews: Fetch Story Details": {
+      "main": [
+        [
+          {
+            "node": "Hacker News: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal II",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hacker News: Insert to DB": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Enrich Signal_Yahoo",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "ai_outputParser",
+            "index": 0
+          },
+          {
+            "node": "Enrich Signal_Yahoo",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Signal II": {
+      "main": [
+        [
+          {
+            "node": "Flatten LLM Output - HN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yahoo Tech: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "Yahoo Tech: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yahoo Tech: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "Yahoo Tech: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yahoo Tech: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_Yahoo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Signal_Yahoo": {
+      "main": [
+        [
+          {
+            "node": "Flatten LLM Output - RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model_HN": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Enrich Signal II",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser_HN": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Enrich Signal II",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Signal_RSS": {
+      "main": [
+        [
+          {
+            "node": "Flatten LLM Output - RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tone Model - RSS": {
+      "main": [
+        [
+          {
+            "node": "Insert feed into DB_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten LLM Output - RSS": {
+      "main": [
+        [
+          {
+            "node": "Tone Model - RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten LLM Output - HN": {
+      "main": [
+        [
+          {
+            "node": "Tone Model - HN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tone Model - HN": {
+      "main": [
+        [
+          {
+            "node": "Insert feed into DB_HN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert feed into DB_HN": {
+      "main": [
+        [
+          {
+            "node": "Hacker News: Loop Over Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4d0de97c-20a3-4d06-9932-cfe346061b44",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "YEmVz4IjvlnA3Mcc",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}

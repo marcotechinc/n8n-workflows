@@ -1,0 +1,35 @@
+{
+  "name": "(TODO) Misc - YouTube Transcripts",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7e84a2a7-5d7a-434e-b8cf-e003d6057572",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "472b5807-a5ec-4d51-b73f-838f356f2afc",
+  "meta": {
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "vAucYAHvqERAZtwm",
+  "tags": [
+    {
+      "updatedAt": "2025-06-11T23:54:18.736Z",
+      "createdAt": "2025-06-11T23:54:18.736Z",
+      "id": "4FVdi2mU0QT9ZIZJ",
+      "name": "Misc"
+    }
+  ]
+}

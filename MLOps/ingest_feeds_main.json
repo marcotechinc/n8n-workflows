@@ -1,0 +1,112 @@
+{
+  "name": "ingest_feeds_main",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        80
+      ],
+      "id": "9434f09f-bbd3-48ce-98ed-dfbe82cab90c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "cQcM3sMKq4QNECYI",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/cQcM3sMKq4QNECYI",
+          "cachedResultName": "ingest_feeds_hn"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        208
+      ],
+      "id": "fd891e9e-30ed-4d5d-9af0-d4420075a9a4",
+      "name": "Call 'ingest_feeds_hn'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "49G9gWHlvrwH99Sp",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/49G9gWHlvrwH99Sp",
+          "cachedResultName": "ingest_feeds_rss"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d1b826b7-2d34-47b0-8abf-24bf9677a561",
+      "name": "Call 'ingest_feeds_rss'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Call 'ingest_feeds_hn'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Call 'ingest_feeds_rss'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7616dc8c-6111-4e05-abbf-dc525aa8c297",
+  "meta": {
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "Z0ojzknuXKQpTzD2",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}

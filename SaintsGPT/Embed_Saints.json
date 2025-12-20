@@ -1,0 +1,274 @@
+{
+  "name": "Embed_Saints",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        48,
+        128
+      ],
+      "id": "f6f8d393-2326-45e6-a095-13404f3c2e08",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/saints",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        128
+      ],
+      "id": "a0db522f-23e6-4403-91d2-275bffcfb16a",
+      "name": "Query Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        480,
+        224
+      ],
+      "id": "2e138b6c-2bac-4db8-a967-14a63604a1f1",
+      "name": "Loop - Files"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const input = item.json;\n  const docId = input.canonical_id || \"missing-id\";\n\n  return {\n    json: {\n      content: `\nTone Profile: ${input.tone_profile || \"\"}\nVirtue Focus: ${input.virtue_focus || \"\"}\nKnown Quote: \"${input.known_quote || \"\"}\"\nPreferred Topics: ${(input.preferred_topics || []).join(\", \")}\nAvoid Topics: ${(input.avoid_topics || []).join(\", \")}\nCharisms: ${(input.charism_tags || []).join(\", \")}\n      `.trim(),\n      embedding: null,\n      metadata: {\n        doc_id: docId,\n        title: input.saint_name || \"Unnamed Saint\",\n        source_id: docId,\n        source_url: \"\",\n        source: \"saints (db)\",\n        chunk_index: null,\n        source_type: \"structured\",\n        tags: input.charism_tags || [],\n        voice_style: input.default_tone_mode || \"narrative\",\n        content_hash: \"\",\n        created_at: input.created_at || new Date().toISOString(),\n        saint_primary: docId,\n        preferred_topics: input.preferred_topics || [],\n        avoid_topics: input.avoid_topics || [],\n        search_aliases: input.search_aliases || [],\n        origin: \"saints (db)\"\n      }\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        240
+      ],
+      "id": "507a5ecb-f0bb-4c4a-9a40-5ade013fafff",
+      "name": "Flatten Structure"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "saint_vectors",
+          "mode": "list",
+          "cachedResultName": "saint_vectors"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        224
+      ],
+      "id": "e6a1f518-96b5-495a-b21f-a880eeeeb509",
+      "name": "Doctrine Embedder",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        48
+      ],
+      "id": "584f36a1-d3b8-4f2d-9434-2ec147e761a2",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        80
+      ],
+      "id": "c6c4a87b-d912-42d6-9fe7-65bea6b4f74d",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        240
+      ],
+      "id": "7e848e43-db2f-487a-b715-ddc3af38bda5",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "content": "NOTE: \n- Still have not yet fully got this running\n- Fixes needed in scrapers",
+        "height": 140
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        704,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "9102a7a0-1494-425b-a307-ab1fb9242524",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "TODO:\n- Include data from Saints table",
+        "height": 120
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        160,
+        -48
+      ],
+      "typeVersion": 1,
+      "id": "62c23fb8-0e61-4e91-baba-bac6d21bdaa2",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop - Files": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Flatten Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Structure": {
+      "main": [
+        [
+          {
+            "node": "Doctrine Embedder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Doctrine Embedder",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Doctrine Embedder",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doctrine Embedder": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "17b4c9e8-1bd9-4d0a-a85c-88171ee95867",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "jIx2xLFJnEeKpcNO",
+  "tags": [
+    {
+      "updatedAt": "2025-05-26T23:48:34.783Z",
+      "createdAt": "2025-05-26T23:48:34.783Z",
+      "id": "i5SZsJiDTjwrkWjX",
+      "name": "Saints GPT"
+    }
+  ]
+}

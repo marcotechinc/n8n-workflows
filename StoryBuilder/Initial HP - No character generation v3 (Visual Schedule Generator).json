@@ -1,0 +1,869 @@
+{
+  "name": "Initial HP - No character generation v3 (Visual Schedule Generator)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "User Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "JTBD",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        32,
+        -48
+      ],
+      "id": "8c7d66a1-4357-426b-915b-12316c533efa",
+      "name": "On form submission",
+      "webhookId": "0835dd42-e916-4290-8626-680037284881"
+    },
+    {
+      "parameters": {
+        "content": "## Task Analyzer",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        768,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "e71e49d8-e9ed-41de-8824-64dc927cf96e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## User Form",
+        "height": 80,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "0a9c7b77-a2b4-4341-b7c1-1838230b6b4c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Scene Prompt Generator",
+        "height": 80,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1088,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "23742093-9cfa-4a8f-9297-afdc9499912a",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Save in Google Drive",
+        "height": 80,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4640,
+        240
+      ],
+      "typeVersion": 1,
+      "id": "fb8c7597-4f4f-40ae-9d07-7990f6c4c5ea",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"character\": {\n    \"name\": \"Benji\",\n    \"age\": 7,\n    \"gender\": \"boy\",\n    \"appearance\": {\n      \"hair\": \"short, slightly messy black hair\",\n      \"eyes\": \"big, curious brown eyes\",\n      \"skin\": \"light with a warm tone\",\n      \"expression\": \"friendly, open face with a gentle smile\",\n      \"clothing\": {\n        \"shirt\": \"bright yellow t-shirt\",\n        \"shorts\": \"sky-blue shorts\"\n      },\n      \"posture\": \"relaxed and confident\",\n      \"overall_impression\": \"calm, adventurous presence\"\n    }\n  },\n  \"jtbd\": \"{{ $json.JTBD }}\",\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        -48
+      ],
+      "id": "59c5a598-a1d9-4b07-8fd0-88914dff7e85",
+      "name": "Combine Character and JTBD"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        448
+      ],
+      "id": "6eca4374-2e4c-4737-afa2-660211fb3a12",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $json[\"text\"];\n\n// Strip markdown code block if present\nconst cleaned = rawText.replace(/```json|```/g, \"\").trim();\n\n// Parse JSON\nconst parsed = JSON.parse(cleaned);\n\n// Return one item per loop\nreturn parsed.map(scene => ({ json: scene }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        272
+      ],
+      "id": "87928a64-6385-4343-aed7-1ea3369095d7",
+      "name": "Fix JSON"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2944,
+        240
+      ],
+      "id": "750ed291-0a1a-4d9d-ad16-5f1db51f3c67",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "const imageUrl = 'https://raw.githubusercontent.com/marcotechinc/sb-dev/main/characters/benji.jpg';\n\n// Download the image as binary\nconst imageBuffer = await this.helpers.request({\n  method: 'GET',\n  url: imageUrl,\n  encoding: null // Return raw binary buffer\n});\n\n// Convert to base64 (no prefix)\nconst imageBase64 = imageBuffer.toString('base64');\n\n// Return for next step (Leonardo upload)\nreturn [\n  {\n    json: {\n      image_base64: imageBase64\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -256
+      ],
+      "id": "bc7ac230-392a-435d-9585-30c794929e7d",
+      "name": "Download character image"
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiKey = $env.LEONARDO_API_KEY;\n\n// Request presigned upload URL for image (JPG)\nconst response = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'https://cloud.leonardo.ai/api/rest/v1/init-image',\n  headers: {\n    Authorization: `Bearer ${apiKey}`,\n    'Content-Type': 'application/json'\n  },\n  body: {\n    extension: 'jpg'\n  },\n  json: true\n});\n\nconst { id: initImageId, url: uploadUrl, fields } = response.uploadInitImage;\n\n// Return result as required by n8n (array of objects)\nreturn [\n  {\n    json: {\n      initImageId,\n      uploadUrl,\n      fields\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -64
+      ],
+      "id": "fe8d098b-079a-429c-9724-fa2bf92b7562",
+      "name": "Request Presigned URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.uploadUrl }}",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=Content-Type\t",
+              "value": "={{ $json.fields[\"Content-Type\"] }}"
+            },
+            {
+              "name": "bucket",
+              "value": "={{ $json.fields.bucket }}"
+            },
+            {
+              "name": "X-Amz-Algorithm",
+              "value": "={{ $json.fields[\"X-Amz-Algorithm\"] }}"
+            },
+            {
+              "name": "X-Amz-Credential",
+              "value": "={{ $json.fields[\"X-Amz-Credential\"] }}"
+            },
+            {
+              "name": "X-Amz-Date",
+              "value": "={{ $json.fields[\"X-Amz-Date\"] }}"
+            },
+            {
+              "name": "X-Amz-Security-Token",
+              "value": "={{ $json.fields[\"X-Amz-Security-Token\"] }}"
+            },
+            {
+              "name": "key",
+              "value": "={{ $json.fields.key }}"
+            },
+            {
+              "name": "Policy",
+              "value": "={{ $json.fields.Policy }}"
+            },
+            {
+              "name": "X-Amz-Signature\t",
+              "value": "={{ $json.fields[\"X-Amz-Signature\"] }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1504,
+        -160
+      ],
+      "id": "8239cd94-e304-4b79-afbb-a99505e526ea",
+      "name": "Upload to Presigned URL"
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = $json[\"fields\"];\n\nlet parsed;\n\ntry {\n  parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;\n} catch (e) {\n  throw new Error('Failed to parse fields: ' + e.message);\n}\n\nreturn [\n  {\n    json: {\n      ...$json,\n      fields: parsed\n    },\n    binary: $binary\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        -64
+      ],
+      "id": "7064b04e-83f8-4104-97e3-d1e529c053e7",
+      "name": "Split fields object"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "image_base64",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        -256
+      ],
+      "id": "98aa5671-6e48-4d31-ab26-1f13ef40b23f",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1280,
+        -160
+      ],
+      "id": "5e47e0ba-7c22-47c1-a8b3-4644242531bf",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "=https://cloud.leonardo.ai/api/rest/v1/init-image/{{ $('Merge').item.json.initImageId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LEONARDO_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        -160
+      ],
+      "id": "de56df19-c291-47e1-a9af-2b8155a91bc7",
+      "name": "Poll for image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cloud.leonardo.ai/api/rest/v1/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LEONARDO_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"negative_prompt\": \"{{ $('Loop Over Items').item.json.negative_prompt }}\",\n  \"modelId\": \"2067ae52-33fd-4a82-bb92-c2c55e7d2786\",\n  \"presetStyle\": \"ILLUSTRATION\",\n  \"scheduler\": \"LEONARDO\",\n  \"num_images\": 1,\n  \"guidance_scale\": 7,\n  \"num_inference_steps\": 30,\n  \"width\": 1368,\n  \"height\": 768,\n  \"seed\": 3926980335,\n  \"controlnets\": [\n    {\n      \"initImageId\": \"{{ $json.init_images_by_pk.id }}\",\n      \"initImageType\": \"UPLOADED\",\n      \"preprocessorId\": 133,\n      \"strengthType\": \"High\"\n    },\n    {\n      \"initImageId\": \"{{ $json.init_images_by_pk.id }}\",\n      \"initImageType\": \"UPLOADED\",\n      \"preprocessorId\": 67,\n      \"strengthType\": \"High\"\n    }\n  ]\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3392,
+        240
+      ],
+      "id": "2cd46d7f-db13-40f7-8cdf-903c2e1fed56",
+      "name": "Generate Scene Image"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ff35ca74-88df-4e29-890e-411770e18f34",
+              "leftValue": "={{ $json.generations_by_pk.status }}",
+              "rightValue": "COMPLETE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4112,
+        80
+      ],
+      "id": "d8ee59a3-f841-4744-822a-cb9e2727b8ee",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://cloud.leonardo.ai/api/rest/v1/generations/{{\n  $node[\"Store Generation ID\"].json[\"generationId\"] || \n  $node[\"Generate Scene Image\"].json[\"sdGenerationJob\"][\"generationId\"]\n}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LEONARDO_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3904,
+        80
+      ],
+      "id": "cb9c71b0-bace-4ce6-b6a3-91ea518f5ad9",
+      "name": "Poll Generation Status"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1728,
+        -160
+      ],
+      "id": "b77f966b-7721-4eeb-8bd0-f783ca12b783",
+      "name": "Wait for character image upload",
+      "webhookId": "05fd8d28-5762-4349-81c7-b9483f02317d"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4304,
+        272
+      ],
+      "id": "49d996a6-56f2-4b55-ad61-cc6a925ebdd2",
+      "name": "Wait for image generation",
+      "webhookId": "18914f8a-0bef-4d7f-a944-fec286f9179c"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1c80653e-53ed-4c46-9ce5-f7767eb8ed72",
+              "name": "generationId",
+              "value": "={{ $json.sdGenerationJob.generationId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3680,
+        80
+      ],
+      "id": "95d2e822-205f-4312-ab4a-45de8f721ce6",
+      "name": "Store Generation ID"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4672,
+        400
+      ],
+      "id": "15b9cfcc-4f15-4755-8c8f-7fc896bf70ab",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4lEBy7qEfA2UCGII",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json[\"generations_by_pk\"][\"generated_images\"][0][\"url\"] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4320,
+        -96
+      ],
+      "id": "12a4fbfb-e031-42c5-8b61-62738f1ca6fa",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "content": "## Prepare Character Image",
+        "height": 80,
+        "width": 1220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        720,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "d6d546b8-c1db-49ce-9031-68a9adaf29a2",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22e6f8e9-7fb5-40a9-bff0-8f43ef9eaba1",
+              "name": "init_images_by_pk.id",
+              "value": "={{ $json.init_images_by_pk.id }}",
+              "type": "string"
+            },
+            {
+              "id": "e4edbd77-0a3f-4a48-b2ed-88b2da2f532c",
+              "name": "init_images_by_pk.createdAt",
+              "value": "={{ $json.init_images_by_pk.createdAt }}",
+              "type": "string"
+            },
+            {
+              "id": "2a34b3a1-f43f-445e-8fad-147670c03636",
+              "name": "init_images_by_pk.url",
+              "value": "={{ $json.init_images_by_pk.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2160,
+        -64
+      ],
+      "id": "fc060b2c-0337-4622-ae9e-80ba9b3ec920",
+      "name": "Set init_image"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2528,
+        240
+      ],
+      "id": "a4c9e1b3-a62a-4988-b186-cac6b8cda2ed",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a visual schedule for this task:\n\nTask: {{ $json.jtbd }}\n\nReturn only a JSON array of 5–7 items with `scene_number`, `scene_name`, `prompt`, and `negative_prompt`.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an image prompt generator for special education visual schedules. Given a simple daily task, break it down into clear, atomic steps that can be illustrated.\n\nFirst, think step-by-step: What does the child need to do from start to finish?\n\nThen, generate a JSON array of 5–7 image prompts, each representing one of those steps.\n\nEach output must describe what the image should clearly show:\n- Only one step per scene\n- Always use the same consistent child (7-year-old boy)\n- Include action, environment, and POV\n- Focus on clarity, visual teaching, and instructional accuracy\n\nEach prompt should:\n- Be written as if instructing an image generator\n- Be clean, consistent, and descriptive (no metaphors, no vague language)\n- Use fixed POV (side view)\n- Use fixed clothing and fixed setting (bathroom or classroom)\n- Avoid narrative or emotional variation\n\nEach item must include:\n- `scene_number`: the step index\n- `scene_name`: short instructional title\n- `prompt`: full image description\n- `negative_prompt`: \"dark, messy, stylized, surreal, toy-like, chaotic, product-style\"\n\nOutput JSON only — no extra commentary."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        784,
+        272
+      ],
+      "id": "61d80e21-c441-49db-b490-7ae7ab671395",
+      "name": "Task Analyzer (COT)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Combine Character and JTBD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Character and JTBD": {
+      "main": [
+        [
+          {
+            "node": "Task Analyzer (COT)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Download character image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Request Presigned URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Task Analyzer (COT)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix JSON": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Generate Scene Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download character image": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Presigned URL": {
+      "main": [
+        [
+          {
+            "node": "Split fields object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split fields object": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Upload to Presigned URL": {
+      "main": [
+        [
+          {
+            "node": "Wait for character image upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Upload to Presigned URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll for image": {
+      "main": [
+        [
+          {
+            "node": "Set init_image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Scene Image": {
+      "main": [
+        [
+          {
+            "node": "Store Generation ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for image generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Generation Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for character image upload": {
+      "main": [
+        [
+          {
+            "node": "Poll for image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for image generation": {
+      "main": [
+        [
+          {
+            "node": "Store Generation ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Generation ID": {
+      "main": [
+        [
+          {
+            "node": "Poll Generation Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set init_image": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Analyzer (COT)": {
+      "main": [
+        [
+          {
+            "node": "Fix JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f54170ad-84b9-442c-bf01-e77411c362d7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "nVI38CcD6ho2Hh0b",
+  "tags": [
+    {
+      "updatedAt": "2025-05-17T17:53:06.626Z",
+      "createdAt": "2025-05-17T17:53:06.626Z",
+      "id": "cRs4n3u2lESNBFK6",
+      "name": "Story Builder"
+    }
+  ]
+}

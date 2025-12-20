@@ -1,0 +1,525 @@
+{
+  "name": "Hello World - E2E - webhook_backup_20250612",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c87cdf07-4ab9-4cb8-9c30-42b1bb10becd",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1808
+      ],
+      "id": "98a67a22-b38e-4268-8e49-f284022d8793",
+      "name": "Webhook",
+      "webhookId": "c87cdf07-4ab9-4cb8-9c30-42b1bb10becd"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2464,
+        2320
+      ],
+      "id": "8e82d9f7-c1e0-4494-93c9-c3ad19712dad",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Someone age {{ $json[\"Age?\"] }} says:\n\n“{{ $json[\"What is the issue?\"] }}”\n\nThey are asking on behalf of: {{ $json[\"Who is this for?\"] }}.",
+        "options": {
+          "systemMessage": "=Someone age {{ $json[\"Age?\"] }} says:  \n“{{ $json[\"What is the issue?\"] }}”  \nThey are asking on behalf of: {{ $json[\"Who is this for?\"] }}.\n\n---\n\nBefore responding, reflect on the nature of the issue.  \nAsk yourself:  \n- Does this involve sin, sacraments, moral teaching, or Church doctrine?  \n- Would consulting authoritative sources deepen the response?\n\nIf so, use the \"doctrine_retriever\" tool to find the most relevant Church teaching, Catechism entry, or doctrinal text.  \nSummarize key insights and cite the source when helpful.\n\n---\n\nYou are {{ $json.saint_name }}.  \nYou are {{ $json.tone_profile }}, speaking in the tone of a {{ $json.default_tone_mode }}.  \nYou are known for: {{ $json.charism_tags.join(\", \") }}.  \nGuided by the virtues of {{ $json.virtue_focus }}.  \nYou often teach on: {{ $json.preferred_topics.join(\", \") }}.  \nYou avoid: {{ $json.avoid_topics.join(\", \") }}.  \nYour voice is captured in this quote: {{ $json.known_quote }}\n\nSpeak with theological clarity, spiritual depth, and pastoral care.  \nInclude scripture, doctrine, or your own reflections when appropriate.  \nConclude with one practical step the person can take today in truth and charity.\n\nMake sure your response is not generic. Speak as {{ $json.saint_name }} would — drawing from their spirituality, their mission, their charisms, and their known way of guiding souls. Your answer should reflect what {{ $json.saint_name }} would uniquely emphasize or focus on in this situation."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2384,
+        1824
+      ],
+      "id": "8ff06a26-2516-4c50-8935-6dc44f5ef800",
+      "name": "SaintsGPT"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        2064
+      ],
+      "id": "aa7c9286-c3d6-4a5a-8b27-a56f297c4fdc",
+      "name": "OpenAI Chat Model (SaintsGPT)",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1168,
+        2192
+      ],
+      "id": "6286840f-d25e-4b43-8be5-61d99163da88",
+      "name": "OpenAI Chat Model (Saint Selector)",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "doctrine_retriever",
+        "toolDescription": "Retrieve doctrinal content from Supabase vector store",
+        "tableName": {
+          "__rl": true,
+          "value": "doctrine_vectors",
+          "mode": "list",
+          "cachedResultName": "doctrine_vectors"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        2480,
+        2128
+      ],
+      "id": "c33a8fe9-1410-48b1-a1b5-739c8005fa68",
+      "name": "Doctrine Retriever",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Issue: \n{{ $json['What is the issue?'] }}\n\nAudience:\n{{ $json['Who is this for?'] }}\n\nAge:\n{{ $json['Age?'] }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a classification assistant.\n\nGiven the user's issue and audience details, return structured JSON to help select a saintly guide.\n\nYour job:\n- Choose the most fitting saint (based on temperament, life, patronage, or virtue)\n- Return the saint’s `canonical_id` — not the display name\n- Format the ID as lowercase with underscores (e.g., francis_assisi, monica_of_tagaste)\n- You are not restricted to any fixed list — choose the saint most suited to the input, even if they may not yet exist in the system\n- Include tone, virtue, simplify level, and audience tags\n\nRespond only with valid JSON in this format:\n\n{\n  \"persona\": \"\",\n  \"tone_mode\": \"\",\n  \"virtue_focus\": \"\",\n  \"simplify_level\": 1,\n  \"audience_tags\": []\n}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1184,
+        1952
+      ],
+      "id": "eccf596f-003e-473b-893a-ab3420b51f59",
+      "name": "Saint Selector"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = items[0].json;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(input.text);\n} catch (error) {\n  throw new Error('Failed to parse Slot Inference output: ' + error.message);\n}\n\nreturn [\n  {\n    json: {\n      ...parsed\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        1952
+      ],
+      "id": "93a3e4c6-fc5a-407e-9337-78ef55f323f4",
+      "name": "Format JSON"
+    },
+    {
+      "parameters": {
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/saints",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "or",
+              "value": "=(canonical_id.eq.{{$json.persona}},search_aliases.cs.{\"{{$json.persona}}\"})"
+            },
+            {
+              "name": "select",
+              "value": "=*"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        1952
+      ],
+      "id": "b2fb02bb-d9b0-4d83-a5c1-61952b844696",
+      "name": "Query Supabase",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = items[0]?.json;\n\n// If Supabase returned a result\nif (result && result.canonical_id) {\n  return [{ json: result }];\n}\n\n// No match found → fallback logic\nconst fallbackSaints = [\n  {\n    canonical_id: 'francis_assisi',\n    saint_name: 'Saint Francis of Assisi',\n    tone_profile: 'joyful, poetic, nature-loving',\n    default_tone_mode: 'monk',\n    virtue_focus: 'joy, simplicity',\n    charism_tags: ['poverty', 'nature', 'peacemaking'],\n    preferred_topics: ['materialism', 'loneliness', 'anxiety'],\n    avoid_topics: ['abstract theology'],\n    known_quote: '“Preach the Gospel at all times…”'\n  },\n  {\n    canonical_id: 'therese_lisieux',\n    saint_name: 'Saint Thérèse of Lisieux',\n    tone_profile: 'soft, gentle, playful',\n    default_tone_mode: 'child',\n    virtue_focus: 'trust, patience',\n    charism_tags: ['little way', 'joy', 'small sacrifice'],\n    preferred_topics: ['fear', 'loss', 'childhood'],\n    avoid_topics: ['politics', 'philosophy'],\n    known_quote: '“I will spend my heaven doing good on earth.”'\n  }\n];\n\n// Randomly select fallback saint\nconst fallback = fallbackSaints[Math.floor(Math.random() * fallbackSaints.length)];\n\nreturn [{ json: fallback }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        1952
+      ],
+      "id": "83b5944c-3776-4fdb-86ea-f38cb538e94d",
+      "name": "Fallback check"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2112,
+        1824
+      ],
+      "id": "4c346d69-2a32-4d11-9c69-79e107e4a2f7",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseText = $json.output || $json.text;\nconst saint = $node[\"Fallback check\"]?.json || {};\n\nreturn [\n  {\n    json: {\n      response_text: responseText,\n      saint_name: saint.saint_name || \"Unknown Saint\",\n      canonical_id: saint.canonical_id || \"unknown_id\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2832,
+        1824
+      ],
+      "id": "15f23030-bfb3-4a1e-a67e-250c42e5d09c",
+      "name": "Format Output"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25838238-ffb4-46e7-8aed-67b58e686630",
+              "name": "name",
+              "value": "html",
+              "type": "string"
+            },
+            {
+              "id": "45023167-edec-4f50-956a-647fcf43c41b",
+              "name": "response_text",
+              "value": "={{ $json.response_text }}",
+              "type": "string"
+            },
+            {
+              "id": "feecc9da-1853-4641-9e87-62465cf44b70",
+              "name": "saint_name",
+              "value": "={{ $json.saint_name }}",
+              "type": "string"
+            },
+            {
+              "id": "3d39c1d3-0be7-4ba0-9096-cca23ca4d7a7",
+              "name": "canonical_id",
+              "value": "={{ $json.canonical_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3088,
+        1840
+      ],
+      "id": "414dc0b6-b248-4c25-bad8-b90c6c11d426",
+      "name": "Prep webhook response"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        3280,
+        1840
+      ],
+      "id": "7926ee33-f071-417b-9e0e-4b747a9fcc98",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node: Flatten body\nreturn [\n  {\n    json: {\n      ...items[0].json.body\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1808
+      ],
+      "id": "0fa75252-9c7f-4d48-b376-5e8635c1e00e",
+      "name": "Flatten"
+    },
+    {
+      "parameters": {
+        "content": "Add RAG for Saint selector",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1312,
+        2064
+      ],
+      "typeVersion": 1,
+      "id": "4ebf7f6e-40ed-4444-bfc0-3d6a8a33cdae",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Add Search (Tavily)",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2624,
+        1968
+      ],
+      "typeVersion": 1,
+      "id": "b6b7bb05-aae6-4513-bb98-e65687969c5e",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Flatten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Doctrine Retriever",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SaintsGPT": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (SaintsGPT)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Saint Selector)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Saint Selector",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doctrine Retriever": {
+      "ai_tool": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saint Selector": {
+      "main": [
+        [
+          {
+            "node": "Format JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format JSON": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase": {
+      "main": [
+        [
+          {
+            "node": "Fallback check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback check": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Prep webhook response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep webhook response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten": {
+      "main": [
+        [
+          {
+            "node": "Saint Selector",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d8c3c926-99c8-449d-8316-813084faab4e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "rUfppmVc29XcLxHu",
+  "tags": [
+    {
+      "updatedAt": "2025-05-26T23:48:34.783Z",
+      "createdAt": "2025-05-26T23:48:34.783Z",
+      "id": "i5SZsJiDTjwrkWjX",
+      "name": "Saints GPT"
+    }
+  ]
+}

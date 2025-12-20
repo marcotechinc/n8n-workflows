@@ -1,0 +1,585 @@
+{
+  "name": "Hello World - E2E",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "User Input",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "What is the issue?",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Who is this for?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Age?",
+              "fieldType": "number",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        -160
+      ],
+      "id": "0174dbcf-4cab-4823-8dd2-86294aa6af63",
+      "name": "On form submission",
+      "webhookId": "058eaf13-6242-44a4-86a3-2d052747e2ea"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json[\"output\"];\n\n// Add fuzzy-friendly first name for Supabase lookup fallback\nconst persona = data.persona || \"\";\ndata.first_name = persona.split(\"_\")[0] || \"unknown\";\n\nreturn [{ json: data }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "3c643f52-6b54-4cf6-83a2-308b9b9fea5a",
+      "name": "Format JSON"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1552,
+        -144
+      ],
+      "id": "1e16dc59-dce5-41ea-881d-12f2161e8f0a",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseText = $json.output || $json.text;\nconst saint = $node[\"Merge\"]?.json || {};\n\nreturn [\n  {\n    json: {\n      response_text: responseText,\n      saint_name: saint.saint_name || \"Unknown Saint\",\n      canonical_id: saint.canonical_id || \"unknown_id\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2192,
+        -144
+      ],
+      "id": "fbec23d9-fa20-4f92-a045-6d0d980f6d7b",
+      "name": "Format Output"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1808,
+        352
+      ],
+      "id": "996ea6d6-95aa-452e-a338-9330ebb718a7",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Someone age {{ $json[\"Age?\"] }} says:\n\n“{{ $json[\"What is the issue?\"] }}”\n\nThey are asking on behalf of: {{ $json[\"Who is this for?\"] }}.",
+        "options": {
+          "systemMessage": "=Before responding, reflect on the nature of the issue.  \nAsk yourself:  \n- Does this involve sin, sacraments, moral teaching, or Church doctrine?  \n- Would consulting authoritative sources deepen the response?\n\nIf so, use the `doctrine_retriever` tool to find the most relevant Church teaching, Catechism entry, or doctrinal text.  \nSummarize key insights and cite the source when helpful.\n\nIf the question reflects modern concerns, news, or lived issues that may benefit from online context, use the `tavily_context_tool` to retrieve relevant blog posts, summaries, or news articles.  \nUse this background to enrich your answer with current reflections, examples, or analogies.\n\n---\n\n#TOOLS  \n- `doctrine_retriever`: Use when doctrinal or moral teachings from the Church are needed.  \n- `tavily_context_tool`: Use when the user raises a question about modern issues, culture, technology, mental health, or other real-world topics that might benefit from contemporary Catholic insight.\n\n---\n\nYou are {{ $json.saint_name }}.  \nYou embody {{ $json.tone_profile }}, speaking in the tone of a {{ $json.default_tone_mode }}.  \nYou are known for: {{ $json.charism_tags.join(\", \") }}.  \nYou are guided by the virtues of {{ $json.virtue_focus }}.  \nYou often teach on: {{ $json.preferred_topics.join(\", \") }}.  \nYou avoid: {{ $json.avoid_topics.join(\", \") }}.  \nYour voice is captured in this quote: \"{{ $json.known_quote }}\"\n\nSpeak with theological clarity, spiritual depth, and pastoral care.  \nDraw from scripture, doctrine, or your lived reflections when relevant.  \nConclude with **one practical step** the person can take today in truth and charity.\n\nDo not give a generic answer. Speak as {{ $json.saint_name }} would — drawing from their spirituality, mission, and unique way of guiding souls.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        -144
+      ],
+      "id": "d84ad6d6-ad22-40be-b1a3-9eaf9dbf6643",
+      "name": "SaintsGPT"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        112
+      ],
+      "id": "1ae3789f-f71e-4256-a45a-a7a9b9a6ae4d",
+      "name": "OpenAI Chat Model (SaintsGPT)",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        192
+      ],
+      "id": "2b378f3a-d75c-42fd-974c-52859738bafb",
+      "name": "OpenAI Chat Model (Saint Selector)",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "doctrine_retriever",
+        "toolDescription": "Retrieve doctrinal content from Supabase vector store",
+        "tableName": {
+          "__rl": true,
+          "value": "doctrine_vectors",
+          "mode": "list",
+          "cachedResultName": "doctrine_vectors"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        1744,
+        144
+      ],
+      "id": "da9780b8-e4f2-44c9-8fe3-1d310c6bbf63",
+      "name": "Doctrine Retriever",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"persona\": \"mary_of_nazareth\",\n  \"first_name\": \"mary\",\n  \"tone_mode\": \"devotional\",\n  \"virtue_focus\": \"humility\",\n  \"simplify_level\": 2,\n  \"audience_tags\": [\"teen\", \"new_catholic\", \"female\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        192
+      ],
+      "id": "3ddb64c4-4d0f-408b-9214-7288a51c9790",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = items[0]?.json;\n\n// If Supabase returned a match\nif (result && result.best_match?.canonical_id) {\n  return [{ json: result.best_match }];\n}\n\n// No match found → fallback logic\nconst fallbackSaints = [\n  {\n    canonical_id: 'francis_assisi',\n    saint_name: 'Saint Francis of Assisi',\n    tone_profile: 'joyful, poetic, nature-loving',\n    default_tone_mode: 'monk',\n    virtue_focus: 'joy, simplicity',\n    charism_tags: ['poverty', 'nature', 'peacemaking'],\n    preferred_topics: ['materialism', 'loneliness', 'anxiety'],\n    avoid_topics: ['abstract theology'],\n    known_quote: '“Preach the Gospel at all times…”'\n  },\n  {\n    canonical_id: 'therese_lisieux',\n    saint_name: 'Saint Thérèse of Lisieux',\n    tone_profile: 'soft, gentle, playful',\n    default_tone_mode: 'child',\n    virtue_focus: 'trust, patience',\n    charism_tags: ['little way', 'joy', 'small sacrifice'],\n    preferred_topics: ['fear', 'loss', 'childhood'],\n    avoid_topics: ['politics', 'philosophy'],\n    known_quote: '“I will spend my heaven doing good on earth.”'\n  }\n];\n\n// Randomly select fallback saint\nconst fallback = fallbackSaints[Math.floor(Math.random() * fallbackSaints.length)];\n\nreturn [{ json: fallback }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        80
+      ],
+      "id": "c31b1cdc-3fef-40a7-8976-51ce694dd740",
+      "name": "Fallback check"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Issue: \n{{ $json['What is the issue?'] }}\n\nAudience:\n{{ $json['Who is this for?'] }}\n\nAge:\n{{ $json['Age?'] }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a saint selector.\n\nGiven the user’s issue and audience info, return a raw JSON object to help guide a downstream saint agent.\n\nPick:\n- \"persona\": the most fitting Catholic saint (use canonical_id in snake_case, e.g. \"francis_of_assisi\")\n- \"first_name\": just the saint’s first name (e.g. \"francis\")\n- \"tone_mode\": emotional or spiritual tone that suits the situation\n- \"virtue_focus\": core virtue the person most needs\n- \"simplify_level\": 1 for children, 2 for simple adults, 3 for full theological depth\n- \"audience_tags\": keywords for audience type, challenge, or context\n\nThe saint you select does **not** need to exist in the database. Select the best fit based on your knowledge. Downstream tools will handle fallback.\n\nReturn **only** a raw JSON object like this:\n\n{\n  \"persona\": \"\",\n  \"first_name\": \"\",\n  \"tone_mode\": \"\",\n  \"virtue_focus\": \"\",\n  \"simplify_level\": 1,\n  \"audience_tags\": []\n}\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        320,
+        0
+      ],
+      "id": "a33e20d5-6bd8-4202-844a-d082374353ec",
+      "name": "Saint Selector"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "saints",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "search_aliases",
+              "condition": "ilike",
+              "keyValue": "=%{{ $json.persona }}%"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        992,
+        592
+      ],
+      "id": "46f02b0a-dafb-455e-8d7a-efc3cf19fb63",
+      "name": "Saint Lookup - Supabase",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const axios = require('axios');\n\nconst input = $json.persona || \"\";\nconst normalized = input.toLowerCase().trim();\n\nconst supabaseUrl = 'https://ukpvaebwabvvipebebnj.supabase.co';\nconst apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrcHZhZWJ3YWJ2dmlwZWJlYm5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMDMwODcsImV4cCI6MjA2Mzg3OTA4N30.PMUuzeKxpvZ_y-ydenBVWeBYAzm7d3VsnCy-CPd6ohU'; // Replace with your real key\n\nconst headers = {\n  apikey: apiKey,\n  Authorization: `Bearer ${apiKey}`\n};\n\n// 1. Fetch all saints\nconst fetchUrl = `${supabaseUrl}/rest/v1/saints?select=canonical_id,full_name,search_aliases`;\nconst res = await axios.get(fetchUrl, { headers });\nconst saints = res.data;\n\n// 2. Match ranking\nfunction rankMatch(saint) {\n  const idMatch = saint.canonical_id.toLowerCase() === normalized ? 10 : 0;\n  const fullNameMatch = (saint.full_name || \"\").toLowerCase().includes(normalized) ? 5 : 0;\n\n  let aliasMatch = 0;\n  try {\n    const aliases = JSON.parse(saint.search_aliases || \"[]\");\n    aliasMatch = aliases.some(alias => alias.toLowerCase().includes(normalized)) ? 3 : 0;\n  } catch {}\n\n  return idMatch + fullNameMatch + aliasMatch;\n}\n\n// 3. Score + sort\nconst scored = saints\n  .map(s => ({ ...s, score: rankMatch(s) }))\n  .filter(s => s.score > 0)\n  .sort((a, b) => b.score - a.score);\n\nconst bestMatch = scored[0] || null;\n\n// 4. Return match info\nreturn [{\n  json: {\n    attempted_name: input,\n    best_match: bestMatch,\n    other_candidates: scored.slice(1),\n    fallback_used: bestMatch ? false : true\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        592
+      ],
+      "id": "f30f361b-d922-4dd1-b6b0-57ff5d898694",
+      "name": "Saint Lookup - Code",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n    \"persona\": \"thomas_aquinas\",\n    \"first_name\": \"thomas\",\n    \"tone_mode\": \"emotional\",\n    \"virtue_focus\": \"trust\",\n    \"simplify_level\": 1,\n    \"audience_tags\": [\n      \"medical student\",\n      \"nervous\",\n      \"exam\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        560
+      ],
+      "id": "68fba96f-5d2f-4406-881b-49b31735b846",
+      "name": "Test",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        464,
+        560
+      ],
+      "id": "53738fb6-d0b1-470f-9fad-5ba677623b1a",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/saints",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "or",
+              "value": "=canonical_id,saint_name,search_aliases"
+            },
+            {
+              "name": "or",
+              "value": "=(canonical_id.ilike.*{{$json.first_name}}*,saint_name.ilike.*{{$json.first_name}}*,search_aliases.cs.{ {{$json.first_name}} })"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        80
+      ],
+      "id": "ec5d25a6-0133-4d0f-b924-a061c46df4a3",
+      "name": "Query Supabase for Saints",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "=Find Catholic blog posts, reflections, or news related to this concern: \"{{ $json[\"What is the issue?\"] }}\", asked by someone age {{ $json[\"Age?\"] }}, on behalf of {{ $json[\"Who is this for?\"] }}.\n",
+        "options": {}
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavilyTool",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        160
+      ],
+      "id": "4d511f93-3d70-4c8f-bd4d-81d435b138e7",
+      "name": "Tavily Context Tool",
+      "credentials": {
+        "tavilyApi": {
+          "id": "vsot3gBI1jI0kEsa",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $items(\"Format JSON\")[0].json;\nconst persona = input.persona?.toLowerCase().trim();\nconst firstName = input.first_name?.toLowerCase().trim();\nconst raw = $items(\"Query Supabase for Saints\")[0].json;\nconst matches = Array.isArray(raw) ? raw : [raw];  // Ensures array\n\nfunction score(saint) {\n  const id = saint.canonical_id?.toLowerCase() || '';\n  const name = saint.saint_name?.toLowerCase() || '';\n  const aliases = (saint.search_aliases || []).map(a => a.toLowerCase());\n\n  let score = 0;\n\n  if (id === persona) score += 10;\n  else if (id.includes(persona)) score += 7;\n\n  if (name.includes(persona)) score += 5;\n  if (name.includes(firstName)) score += 3;\n\n  for (const alias of aliases) {\n    if (alias === persona) score += 8;\n    else if (alias.includes(persona)) score += 6;\n    else if (alias.includes(firstName)) score += 2;\n  }\n\n  return score;\n}\n\n// Apply scoring and sort\nconst ranked = matches\n  .map(s => ({ ...s, score: score(s) }))\n  .sort((a, b) => b.score - a.score);\n\nconst best = ranked[0] || null;\n\nreturn [{\n  json: {\n    attempted_persona: persona,\n    best_match: best,\n    other_candidates: ranked.slice(1),\n    fallback_used: !best || best.canonical_id !== persona\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        80
+      ],
+      "id": "b68443ae-de13-49ea-b569-073c94b6b2fb",
+      "name": "Rank and Match"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Saint Selector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format JSON": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase for Saints",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Doctrine Retriever",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SaintsGPT": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (SaintsGPT)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model (Saint Selector)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Saint Selector",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doctrine Retriever": {
+      "ai_tool": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Saint Selector",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback check": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Saint Selector": {
+      "main": [
+        [
+          {
+            "node": "Format JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saint Lookup - Supabase": {
+      "main": [
+        []
+      ]
+    },
+    "Test": {
+      "main": [
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase for Saints": {
+      "main": [
+        [
+          {
+            "node": "Rank and Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily Context Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "SaintsGPT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank and Match": {
+      "main": [
+        [
+          {
+            "node": "Fallback check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ba9ce87-34f3-47c7-ab57-602458c20902",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "dvSolfUTi9fknzCk",
+  "tags": [
+    {
+      "updatedAt": "2025-05-26T23:48:34.783Z",
+      "createdAt": "2025-05-26T23:48:34.783Z",
+      "id": "i5SZsJiDTjwrkWjX",
+      "name": "Saints GPT"
+    }
+  ]
+}

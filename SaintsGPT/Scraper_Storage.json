@@ -1,0 +1,816 @@
+{
+  "name": "Scraper_Storage",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "944d2cf5-af35-4962-b32f-a39f40278499",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "=https://ukpvaebwabvvipebebnj.supabase.co/storage/v1/object/doctrine-files/{{ $json.name }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        80
+      ],
+      "id": "33f39682-0f5b-4aef-9fce-c243aa1190ea",
+      "name": "Download",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        528,
+        0
+      ],
+      "id": "4c055b50-c6d1-4701-a3a0-212a78264788",
+      "name": "Loop - Files"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/storage/v1/object/list/doctrine-files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prefix"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        0
+      ],
+      "id": "18c57b71-d4fb-46ca-902b-59acd67057fa",
+      "name": "Query Supabase Storage",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function simpleHash(str) {\n  let hash = 0;\n  if (!str || str.length === 0) return hash.toString();\n  for (let i = 0; i < str.length; i++) {\n    const chr = str.charCodeAt(i);\n    hash = ((hash << 5) - hash) + chr;\n    hash |= 0;\n  }\n  return hash.toString();\n}\n\nfunction slugify(str) {\n  return str\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, \"-\")\n    .replace(/(^-|-$)/g, \"\");\n}\n\n// Defensive logic: look for any possible markdown field\nconst markdown = $json.clean_text || $json.markdown || $json.data || \"EMPTY_CONTENT\";\nconst fileMeta = $node[\"Loop - Files\"].json;\n\nconst fileName = (fileMeta.name || \"unknown.md\").replace(/\\s+/g, \"_\");\nconst title = fileName.replace(\".md\", \"\");\nconst sourceId = slugify(fileName);\nconst docId = slugify(title);\nconst contentHash = simpleHash(markdown);\nconst url = `supabase://storage/${fileName}`;\n\n// Consistent fields across pipelines\nconst docType = \"doctrine\";\nconst voiceStyle = \"doctrinal\";\nconst source = \"markdown_upload\";\n\nreturn [\n  {\n    json: {\n      doc_id: docId,\n      title,\n      source_type: \"storage\",\n      source_id: sourceId,\n      url,\n      clean_text: markdown,\n      content_hash: contentHash,\n      status: \"pending\",\n      created_at: new Date().toISOString(),\n      source,\n      doc_type: docType,\n      voice_style: voiceStyle\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        80
+      ],
+      "id": "36d0443e-da84-430e-888f-8ff139cec2fe",
+      "name": "Clean-up"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/raw_doctrine_docs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source",
+              "value": "storage"
+            },
+            {
+              "name": "source_type",
+              "value": "supabase"
+            },
+            {
+              "name": "source_id",
+              "value": "={{ $('Clean-up').item.json.source_id }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $('Clean-up').item.json.title }}"
+            },
+            {
+              "name": "url",
+              "value": "=supabase: //doctrine-files/{{ $('Clean-up').item.json.source_id }}"
+            },
+            {
+              "name": "clean_text",
+              "value": "={{ $('Clean-up').item.json.clean_text }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $('Clean-up').item.json.status }}"
+            },
+            {
+              "name": "content_hash",
+              "value": "={{ $('Clean-up').item.json.content_hash }}"
+            },
+            {
+              "name": "voice_style",
+              "value": "={{ $('Unwrap output').item.json.voice_style }}"
+            },
+            {
+              "name": "doc_type",
+              "value": "={{ $('Clean-up').item.json.doc_type }}"
+            },
+            {
+              "name": "saint_primary",
+              "value": "={{ $('Unwrap output').item.json.associated_saint }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2592,
+        512
+      ],
+      "id": "4117e5cd-e119-4d5f-9b34-d94a7a1f8601",
+      "name": "Insert to Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/raw_doctrine_docs?source_id=eq.{{ $json.source_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        288
+      ],
+      "id": "f6c853c9-560e-4ae3-b4ac-4dbe674e6c5a",
+      "name": "Query Supabase raw_doctrine",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "09432d0f-91ba-471f-a614-8bb5d7772e4e",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        288
+      ],
+      "id": "a771e1aa-c1f5-44b6-af3b-52e87cd24596",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://ukpvaebwabvvipebebnj.supabase.co/storage/v1/object/doctrine-files/{{ $json.name }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        848
+      ],
+      "id": "e5b24fbb-82e8-46b9-8a5b-292b7f6f7d10",
+      "name": "Download1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        528,
+        768
+      ],
+      "id": "db627ecc-1c05-459c-93fb-1e7b1de2e9c3",
+      "name": "Loop - Files1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/storage/v1/object/list/doctrine-files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prefix"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        768
+      ],
+      "id": "18c63f1e-631e-4f16-944f-4d2a5ffda4bb",
+      "name": "Query Supabase Storage1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function simpleHash(str) {\n  let hash = 0;\n  if (!str || str.length === 0) return hash.toString();\n  for (let i = 0; i < str.length; i++) {\n    const chr = str.charCodeAt(i);\n    hash = ((hash << 5) - hash) + chr;\n    hash |= 0;\n  }\n  return hash.toString();\n}\n\nfunction slugify(str) {\n  return str\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, \"-\")\n    .replace(/(^-|-$)/g, \"\");\n}\n\n// Defensive logic: look for any possible markdown field\nconst markdown = $json.clean_text || $json.markdown || $json.data || \"EMPTY_CONTENT\";\nconst fileMeta = $node[\"Loop - Files1\"].json;\n\nconst fileName = (fileMeta.name || \"unknown.md\").replace(/\\s+/g, \"_\");\nconst title = fileName.replace(\".md\", \"\");\nconst sourceId = slugify(fileName);\nconst docId = slugify(title);\nconst contentHash = simpleHash(markdown);\nconst url = `supabase://storage/${fileName}`;\n\nreturn [\n  {\n    json: {\n      doc_id: docId,\n      title,\n      source_type: \"storage\",\n      source_id: sourceId,\n      url,\n      clean_text: markdown,\n      content_hash: contentHash,\n      status: \"pending\",\n      created_at: new Date().toISOString(),\n      source: \"Markdown Upload\"\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        848
+      ],
+      "id": "69a55095-1612-4347-81f7-e024b2b8bbeb",
+      "name": "Clean-up1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/raw_doctrine_docs",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source",
+              "value": "storage"
+            },
+            {
+              "name": "source_type",
+              "value": "supabase"
+            },
+            {
+              "name": "source_id",
+              "value": "={{ $('Clean-up1').item.json.source_id }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $('Clean-up1').item.json.title }}"
+            },
+            {
+              "name": "url",
+              "value": "=supabase: //doctrine-files/{{ $('Clean-up1').item.json.source_id }}"
+            },
+            {
+              "name": "clean_text",
+              "value": "={{ $('Clean-up1').item.json.clean_text }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $('Clean-up1').item.json.status }}"
+            },
+            {
+              "name": "content_hash",
+              "value": "={{ $('Clean-up1').item.json.content_hash }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        1072
+      ],
+      "id": "5faab1d3-9a19-4849-a805-c8fcdb12327d",
+      "name": "Insert to Supabase1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://ukpvaebwabvvipebebnj.supabase.co/rest/v1/raw_doctrine_docs?source_id=eq.{{ $json.source_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1184,
+        848
+      ],
+      "id": "d90f9dbc-e3d5-48f6-9223-cd487b2a3ccc",
+      "name": "Query Supabase raw_doctrine1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "09432d0f-91ba-471f-a614-8bb5d7772e4e",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        848
+      ],
+      "id": "6c2529d1-f857-47a0-b2d1-84b3c8db8891",
+      "name": "If1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        48
+      ],
+      "id": "a8f417b0-0508-4f3b-b2db-760945b3b564",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=title:\n{{ $json.title }}\n\nclean_text: \n{{ $json.clean_text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a strict formatter and data preserver. Given input content, your task is to remove noise and clean up formatting—**but you must not summarize, shorten, paraphrase, or omit any structured content** (rubrics, examples, headings, markdown, etc.).\n\nReturn only a raw JSON object in the following format, with no explanation, markdown, or code blocks:\n\n{\n  \"purified_content\": \"<cleaned full content>\",\n  \"associated_saint\": \"<clearly identified saint name, or 'doctrine'>\",\n  \"saint_canonical_id\": \"<canonical_id in snake_case, or 'doctrine'>\",\n  \"voice_style\": \"<one of: doctrinal, pastoral, mystical, contemplative, devotional, affectionate, childlike, zealous>\"\n}\n\nDo not assume or default to any saint.  \nIf no saint is clearly mentioned, return:\n- \"associated_saint\": \"doctrine\"\n- \"saint_canonical_id\": \"doctrine\"\n\nIf a specific saint is referenced clearly in the content — including by name, title, or unique identifiers (such as feast descriptions or doctrinal declarations) — match it accurately and assign the appropriate canonical_id. For Mary, this includes any unambiguous reference to her identity as the Mother of God.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        -160
+      ],
+      "id": "5ccd5ce9-9856-43a2-8c17-59655bea8253",
+      "name": "Purify Content"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        272
+      ],
+      "id": "a8257330-925a-47f7-8991-9c10b97fafbf",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "saint_retriever",
+        "toolDescription": "Determine Saint from Supabase vector store",
+        "tableName": {
+          "__rl": true,
+          "value": "saint_vectors",
+          "mode": "list",
+          "cachedResultName": "saint_vectors"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        128
+      ],
+      "id": "3da91eb1-a3a6-4898-8a37-96352e1a5caf",
+      "name": "Saint Retriever",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yeyfgM2GRQTJScoM",
+          "name": "Supabase account - SGPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json[\"output\"];\n\nreturn {\n  purified_content: result.purified_content,\n  associated_saint: result.associated_saint,\n  saint_canonical_id: result.saint_canonical_id,\n  voice_style: result.voice_style\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -160
+      ],
+      "id": "55670e90-dd17-46c9-a05e-6c78ca2d3550",
+      "name": "Unwrap output"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"purified_content\": \"string\",\n  \"associated_saint\": \"string\",\n  \"saint_canonical_id\": \"string\",\n  \"voice_style\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1632,
+        80
+      ],
+      "id": "c5fa94f7-0941-4a0a-be1a-77b83ba3c196",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download": {
+      "main": [
+        [
+          {
+            "node": "Clean-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop - Files": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase Storage": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean-up": {
+      "main": [
+        [
+          {
+            "node": "Purify Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase raw_doctrine": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Insert to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download1": {
+      "main": [
+        [
+          {
+            "node": "Clean-up1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop - Files1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase Storage1": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean-up1": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase raw_doctrine1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to Supabase1": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase raw_doctrine1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Insert to Supabase1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop - Files1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Purify Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Purify Content": {
+      "main": [
+        [
+          {
+            "node": "Unwrap output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Saint Retriever",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saint Retriever": {
+      "ai_tool": [
+        [
+          {
+            "node": "Purify Content",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Purify Content",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unwrap output": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase raw_doctrine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fdac5cd7-2eab-485f-9149-fce81a219abd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "eC8grbHl4iogf5z6",
+  "tags": [
+    {
+      "updatedAt": "2025-05-26T23:48:34.783Z",
+      "createdAt": "2025-05-26T23:48:34.783Z",
+      "id": "i5SZsJiDTjwrkWjX",
+      "name": "Saints GPT"
+    }
+  ]
+}

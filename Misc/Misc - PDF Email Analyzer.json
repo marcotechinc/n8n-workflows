@@ -1,0 +1,176 @@
+{
+  "name": "Misc - PDF Email Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "PDF upload",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload PDF",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        688
+      ],
+      "id": "054e32d5-ed42-4576-b9dc-3f32040dd37b",
+      "name": "On form submission",
+      "webhookId": "f6765c8a-9e0d-4151-a8bf-319587c41816"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Upload_PDF",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        800,
+        688
+      ],
+      "id": "14b71870-de6b-4dec-9201-f928ad64203e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1024,
+        880
+      ],
+      "id": "40c2ed42-920a-413a-a784-1db44b89c16c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"executive_summary\": \"The integration project advanced with initial setup discussions and early access configuration. Sarah Patel confirmed OAuth is required for the API, and John Lee raised concerns about missing access to the dev environment. Documentation links were shared to guide next steps. The team aims to resolve access issues by end of week to maintain the integration timeline.\",\n  \"key_decisions\": [\n    {\n      \"date\": \"2025-06-10\",\n      \"decision\": \"OAuth authentication will be used instead of certificate-based authentication, confirmed by Sarah Patel.\"\n    }\n  ],\n  \"entries\": [\n    {\n      \"date\": \"2025-06-09\",\n      \"text\": \"John Lee reported that he could not access the development environment and requested admin credentials. He flagged this as a blocker for testing the integration scripts.\"\n    },\n    {\n      \"date\": \"2025-06-10\",\n      \"text\": \"Sarah Patel confirmed that OAuth will be required for authentication and shared the official integration documentation. She requested that the access issue be resolved by Friday.\"\n    }\n  ],\n  \"links\": [\n    {\n      \"url\": \"https://company.sharepoint.com/integration-guide\",\n      \"description\": \"Integration setup documentation for internal APIs.\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1248,
+        880
+      ],
+      "id": "a8e3bf94-498e-47b8-bb47-272ce9bddd9b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the structured project data with dated entries and reference links.\n\nDATA:\n{{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a project communication analyst that transforms structured project email threads into JSON summaries for tracking and storage.\n\nINPUT: A JSON object with dated entries, each containing sender, message summary, and optional URLs.\n\nYour output must contain:\n\n1. \"executive_summary\" (150–300 words) – summarize key decisions, blockers, progress, and next steps. Use names, systems, and dates when available.\n\n2. \"key_decisions\" – a list of decisions with their dates and descriptions.\n\n3. \"entries\" – chronological summaries (2–4 sentences per entry). Do not merge unrelated messages. Use concrete details.\n\n4. \"links\" – list all URLs with a short description of their project relevance. Mark broken or unknown links as \"URL inaccessible\".\n\nReturn valid JSON in this format:\n```json\n{\n  \"executive_summary\": \"...\",\n  \"key_decisions\": [\n    { \"date\": \"YYYY-MM-DD\", \"decision\": \"...\" }\n  ],\n  \"entries\": [\n    { \"date\": \"YYYY-MM-DD\", \"text\": \"...\" }\n  ],\n  \"links\": [\n    { \"url\": \"...\", \"description\": \"...\" }\n  ]\n}\n```\nFocus on completeness, clarity, and accuracy. Do not omit earlier emails. Do not include generalities."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1072,
+        688
+      ],
+      "id": "e25c9db9-862c-4702-b4e8-6a24953ad311",
+      "name": "Analyzer - JSON"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Analyzer - JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analyzer - JSON",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analyzer - JSON",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyzer - JSON": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78ee547d-c654-4d47-8c7e-27d5dce19b93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "si1TRBRSoeD11mnt",
+  "tags": [
+    {
+      "updatedAt": "2025-06-11T23:54:18.736Z",
+      "createdAt": "2025-06-11T23:54:18.736Z",
+      "id": "4FVdi2mU0QT9ZIZJ",
+      "name": "Misc"
+    }
+  ]
+}

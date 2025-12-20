@@ -1,0 +1,442 @@
+{
+  "name": "ingest_feeds_rss",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\n\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    url: entry.link,\n    date: entry.pubDate,\n    source: \"TechCrunch\",\n    content: entry.description,\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "9e367941-bb93-4e35-9056-c5cb4cdb2c2b",
+      "name": "TechCrunch: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b28c1b00-760d-4a7b-85ae-b48b7e84d410",
+      "name": "TechCrunch: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "49c56d00-2735-47d8-aeac-0529a32131d9",
+      "name": "TechCrunch: Convert to XML"
+    },
+    {
+      "parameters": {
+        "url": "https://www.ft.com/rss/technology",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        240
+      ],
+      "id": "e5141129-db50-4a85-acdb-8c1a11926949",
+      "name": "FT Tech: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        208,
+        240
+      ],
+      "id": "2a4300b8-4cad-414d-af05-8031835e92d4",
+      "name": "FT Tech: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    date: entry.pubDate,\n    url: entry.link,\n    source: \"FT Tech\",\n    content: entry.description,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        240
+      ],
+      "id": "82246dc8-da70-4a3e-abf7-1eeae374839e",
+      "name": "FT Tech: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        448
+      ],
+      "id": "67d3b660-bbc5-4979-be3e-12134b958cc2",
+      "name": "CoinDesk: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        192,
+        448
+      ],
+      "id": "0142ea4a-81e8-45b9-8a3e-0390e4760341",
+      "name": "CoinDesk: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    date: entry.pubDate,\n    url: entry.link,\n    source: \"CoinDesk\",\n    content: entry.description,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        448
+      ],
+      "id": "29981cdb-3757-4973-904c-a713935413c1",
+      "name": "CoinDesk: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "tableId": "feeds",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.output.title }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.output.source }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.output.content }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $json.output.topic }}"
+            },
+            {
+              "fieldId": "tone",
+              "fieldValue": "={{ $json.output.tone }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $json.output.category }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $json.output.date }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        240
+      ],
+      "id": "fbc48c42-911d-415f-ac22-2dcc03fe480e",
+      "name": "Insert feed into DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        512
+      ],
+      "id": "84d56aea-71e7-4653-9db9-89efd9850712",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"OpenAI launches new agent platform\",\n  \"url\": \"https://techcrunch.com/example\",\n  \"date\": \"2025-10-06\",\n  \"source\": \"TechCrunch\",\n  \"content\": \"OpenAI announced AgentKit, a toolkit to help developers build and deploy AI agents.\",\n  \"topic\": \"AI\",\n  \"tone\": \"positive\",\n  \"category\": \"Product Launch\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        512
+      ],
+      "id": "27c5dd10-5cf1-4b95-9d33-8eea2284fcbd",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following article and append three new fields.\n\nLabel options:\n- topic: [AI, Blockchain, Cybersecurity, Big Tech, Other]\n- tone: [positive, neutral, negative]\n- category: [Product Launch, Funding, Opinion, Market Report, Research, Regulation, Other]\n\nArticle:\nTitle: {{$json[\"title\"]}}\nDate: {{$json[\"date\"]}}\nSource: {{$json[\"source\"]}}\nURL: {{$json[\"url\"]}}\nContent: {{$json[\"content\"]}}\n\nReturn JSON in this exact structure:\n{\n  \"title\": \"{{$json[\"title\"]}}\",\n  \"date\": \"{{$json[\"date\"]}}\",\n  \"source\": \"{{$json[\"source\"]}}\",\n  \"content\": \"{{$json[\"content\"]}}\",\n  \"url\": \"{{$json[\"url\"]}}\",\n  \"topic\": \"<one from list>\",\n  \"tone\": \"<one from list>\",\n  \"category\": \"<one from list>\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a structured classification assistant.\nYou receive one article at a time with fields like title, date, source, and content.\nReturn the same article plus three new fields: topic, tone, and category.\nUse only the allowed labels and return valid JSON.\nDo not summarize, explain, or change existing fields."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        784,
+        240
+      ],
+      "id": "fc1ee4c3-3542-4eee-b584-ddb95dd19504",
+      "name": "Enrich Signal"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -368,
+        240
+      ],
+      "id": "338bdf61-ebf9-4e29-ae56-b0203f7d9c25",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "TechCrunch: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "TechCrunch: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "TechCrunch: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TechCrunch: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FT Tech: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "FT Tech: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FT Tech: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "FT Tech: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FT Tech: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoinDesk: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "CoinDesk: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoinDesk: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "CoinDesk: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CoinDesk: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Signal": {
+      "main": [
+        [
+          {
+            "node": "Insert feed into DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "TechCrunch: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FT Tech: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CoinDesk: Fetch RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "684c9254-ca7f-42f4-b52f-ec082bb094d0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "z52Sow2ZiWhoxNmU",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}

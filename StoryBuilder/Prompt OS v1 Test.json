@@ -1,0 +1,136 @@
+{
+  "name": "Prompt OS v1 Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "61ab1dfd-5bf4-4dbf-b145-9a193418bfd2",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"template\": \"{{ $json.pov }} of a {{ $json.character }} {{ $json.action }} {{ $json.object }} {{ $json.setting }}, no other characters\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        688,
+        112
+      ],
+      "id": "a98600f3-4cff-4d14-96cf-6f2a9f09ce67",
+      "name": "Slot template string"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json;\n  const template = data.template;\n\n  const finalPrompt = template\n    .replace('{{pov}}', data.pov)\n    .replace('{{character}}', data.character)\n    .replace('{{action}}', data.action)\n    .replace('{{object}}', data.object)\n    .replace('{{setting}}', data.setting);\n\n  return {\n    json: {\n      finalPrompt\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "id": "8bcd4e5c-b60a-412f-9c34-6767e8c57a79",
+      "name": "Inject slots into template"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define an array of test slot records for multiple scenes\nconst sceneData = [\n  {\n    POV: \"Side view\",\n    character: \"boy in pajamas\",\n    action: \"brushing his teeth\",\n    object: \"with a blue toothbrush\",\n    setting: \"in front of the bathroom sink\"\n  },\n  {\n    POV: \"View from behind\",\n    character: \"boy in pajamas\",\n    action: \"rinsing his mouth\",\n    object: \"with a small plastic cup\",\n    setting: \"at the bathroom counter\"\n  }\n];\n\n// Convert each object in the array into a separate n8n item\nreturn sceneData.map(data => ({\n  json: data\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        -144
+      ],
+      "id": "da11548d-573b-4aea-96f4-f59c26c0d0fc",
+      "name": "Load test slot records",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://ixpyvpqmrerrmgekjrne.supabase.co/rest/v1/visual_schedule_slots",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "{\n  \"select\": \"pov,character,action,object,setting\"\n}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"apikey\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4cHl2cHFtcmVycm1nZWtqcm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NjMxOTcsImV4cCI6MjA2MzUzOTE5N30.Zx_Zb6eszGcUhhZQBXmOi5YQg4DAwm_kQWBLCQuFOl4\",\n  \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4cHl2cHFtcmVycm1nZWtqcm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NjMxOTcsImV4cCI6MjA2MzUzOTE5N30.Zx_Zb6eszGcUhhZQBXmOi5YQg4DAwm_kQWBLCQuFOl4\",\n  \"Content-Type\": \"application/json\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        0
+      ],
+      "id": "5c8ac7e3-9675-4359-8b55-acb0b29910b4",
+      "name": "Query Supabase"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slot template string": {
+      "main": [
+        [
+          {
+            "node": "Inject slots into template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load test slot records": {
+      "main": [
+        []
+      ]
+    },
+    "Query Supabase": {
+      "main": [
+        [
+          {
+            "node": "Slot template string",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c4f5eacb-6579-45be-b569-ebcc23c905ed",
+  "meta": {
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "XYvrx4uUOzCXQmJQ",
+  "tags": [
+    {
+      "updatedAt": "2025-05-17T17:53:06.626Z",
+      "createdAt": "2025-05-17T17:53:06.626Z",
+      "id": "cRs4n3u2lESNBFK6",
+      "name": "Story Builder"
+    }
+  ]
+}

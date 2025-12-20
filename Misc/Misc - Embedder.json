@@ -1,0 +1,234 @@
+{
+  "name": "Misc - Embedder",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7d3cb10d-a6c6-4004-96bc-b9e6aaabd4f0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "bc_writing_rubric",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3306a738-6085-43c5-b061-9b1ca67011de",
+      "name": "Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "sv022Yz8rJXZ7Fty",
+          "name": "Supabase - Misc"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Note: Just change source of what to embed"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        144,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "33fb4290-3b9a-4483-a568-a7dd28e4d059",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "9494ada4-fd1e-455b-ac31-b6bf05329923",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "bc_writing_rubric_embeddings",
+          "mode": "list",
+          "cachedResultName": "bc_writing_rubric_embeddings"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        80
+      ],
+      "id": "6cba3c90-6698-4f05-be3a-ddf4800ce407",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "sv022Yz8rJXZ7Fty",
+          "name": "Supabase - Misc"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        -96
+      ],
+      "id": "dedbd599-2974-4b97-ab17-3408975c1a22",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        944,
+        -128
+      ],
+      "id": "fafdcc07-4b81-4a4f-9e0e-3b13c1e4a0fc",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        32
+      ],
+      "id": "34e8e74c-6024-4ec0-aa9d-5f91f64447de",
+      "name": "Recursive Character Text Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "af2ad4b8-b904-48a5-a531-88ad93badf7a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "8x9Q8xDGjpXr7rON",
+  "tags": [
+    {
+      "updatedAt": "2025-06-11T23:54:18.736Z",
+      "createdAt": "2025-06-11T23:54:18.736Z",
+      "id": "4FVdi2mU0QT9ZIZJ",
+      "name": "Misc"
+    }
+  ]
+}

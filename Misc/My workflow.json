@@ -1,0 +1,134 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json[\"What task would you like broken down?\"] }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a Special Needs Child Education Assistant. Break down the following task for a special needs child aged 5 to 8 in 5 very simple, easy-to-understand steps. Use plain language and short sentences. Respond in valid JSON using this structure:\n\n{\n  \"task\": \"<original task>\",\n  \"audience\": \"child (age 5–8, special needs)\",\n  \"steps\": [\n    \"Step 1\",\n    \"Step 2\",\n    \"Step 3\",\n    \"Step 4\",\n    \"Step 5\"\n  ]\n}\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        320,
+        0
+      ],
+      "id": "c668cb3c-65cf-420d-8879-ea7330ca6c7a",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "ef946917-0992-4593-8965-b7e3204e21f2",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Test Form",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "What task would you like broken down?",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        0
+      ],
+      "id": "03a4e6df-c403-4e23-9660-24edfbbfe335",
+      "name": "On form submission",
+      "webhookId": "9bfb27c2-5b17-4727-a536-8891db5f49d5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json[\"text\"];\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  throw new Error(\"Failed to parse JSON: \" + e.message);\n}\n\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        0
+      ],
+      "id": "87b9ceab-35fc-4f39-9e8b-10435d700aec",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "23350405-0c59-4085-b9bf-6717488f6dd1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "WvhIVdAZJSwnonKh",
+  "tags": []
+}

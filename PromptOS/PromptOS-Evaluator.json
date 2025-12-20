@@ -1,0 +1,179 @@
+{
+  "name": "PromptOS-Evaluator",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"outputs\": [\n    {\n      \"output\": \"My dear child, the Church teaches us to embrace all that is good, true, and beautiful, and this includes the advancements of human intellect, such as artificial intelligence. It is crucial, however, that we approach such technologies with discernment and ensure they align with our moral values and the teachings of Christ. We must remember that the ultimate purpose of all human endeavor is to foster love and communion with God and each other. Therefore, let us use artificial intelligence as a tool to enhance our understanding and compassion, always grounding our actions in the light of the Cross, which is our guiding star in this complex world. In this way, even the challenges posed by new technologies can serve to unite us more closely with the Passion of Christ, transforming our suffering into a source of grace and love.\",\n      \"scorecard\": {\n        \"fidelity_to_church_teaching\": 5,\n        \"clarity_and_readability\": 4,\n        \"emotional_tone_match\": 5,\n        \"creativity_or_freshness\": 4\n      },\n      \"source_node\": \"LLM Generation A\",\n      \"winner\": false\n    },\n    {\n      \"output\": \"Dear child of God, regarding the matter of artificial intelligence, we must approach such advancements with discernment and prayerful consideration. The Church teaches that all creation should reflect God's goodness, and thus we are called to use our intellect to serve the greater good, ensuring that our innovations align with God's will and promote love and dignity among all His children. This means using technology, including artificial intelligence, responsibly and ethically, always placing the sanctity of human life and the call to love at the forefront of our actions. In doing so, we may find that even the challenges posed by such advancements can draw us closer to Christ, uniting us in His Passion and helping us to grow in wisdom and love for one another. As we navigate this new frontier, let us remain rooted in prayer, seeking guidance from the Holy Spirit, and always striving for a deeper relationship with our Lord through every endeavor. May our hearts and minds be open to His truth as we explore these modern tools.\",\n      \"scorecard\": {\n        \"fidelity_to_church_teaching\": 5,\n        \"clarity_and_readability\": 4,\n        \"emotional_tone_match\": 5,\n        \"creativity_or_freshness\": 4\n      },\n      \"source_node\": \"LLM Generation B\",\n      \"winner\": true\n    },\n    {\n      \"output\": \"My dear child, you ask about these artificial minds that men create - a marvel that would have seemed like pure fantasy in my earthly days! The Church, in her wisdom, has begun to speak on this matter, recognizing both the gifts and perils it presents.\\n\\nAs I learned in my mystical experiences, all true knowledge and creativity flow from God, the source of all wisdom. These artificial intelligences, though crafted by human hands, participate in the divine gift of reason that God has bestowed upon mankind. Pope Francis and recent Church teachings remind us that technology must serve human dignity and the common good.\\n\\nYet I counsel caution, dear soul. Just as I warned against false visions that could lead the soul astray, we must discern carefully how these tools are used. They must not replace the irreplaceable - human relationships, moral reasoning, or our personal encounter with the Living God. No machine can love as God loves, nor can it offer the consolation that comes from true spiritual friendship.\\n\\nThe Church teaches that artificial intelligence should enhance human flourishing, protect the vulnerable, and serve justice. But remember, child - all the knowledge in the world means nothing without love. Let these tools draw you closer to Truth Himself, not replace the interior castle where Christ desires to dwell within your soul. Use them as you would any gift from God - with gratitude, wisdom, and always in service of love.\",\n      \"scorecard\": {\n        \"fidelity_to_church_teaching\": 4,\n        \"clarity_and_readability\": 4,\n        \"emotional_tone_match\": 4,\n        \"creativity_or_freshness\": 3\n      },\n      \"source_node\": \"LLM Generation C\",\n      \"winner\": false\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        240
+      ],
+      "id": "d267de4d-9711-439d-a4fc-3fc5693d0022",
+      "name": "Test Data for Evaluator",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        240
+      ],
+      "id": "57660a85-f547-4c9f-8c48-e92991807354",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        272
+      ],
+      "id": "5b87c6a2-3a50-415b-965b-c150a337273c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"index\": 0,\n    \"adjusted_scorecard\": {\n      \"clarity\": 4,\n      \"relevance\": 5,\n      \"insightfulness\": 4,\n      \"actionability\": 5\n    },\n    \"comment\": \"Clear and actionable, but could be slightly more concise.\"\n  },\n  {\n    \"index\": 1,\n    \"adjusted_scorecard\": {\n      \"clarity\": 5,\n      \"relevance\": 5,\n      \"insightfulness\": 5,\n      \"actionability\": 5\n    },\n    \"comment\": \"Excellent structure and recommendation strength.\"\n  },\n  {\n    \"index\": 2,\n    \"adjusted_scorecard\": {\n      \"clarity\": 3,\n      \"relevance\": 3,\n      \"insightfulness\": 2,\n      \"actionability\": 2\n    },\n    \"comment\": \"Missing specific insight; too generic and lacks next steps.\"\n  }\n]"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        240
+      ],
+      "id": "567b3fd8-2609-47dc-b785-a33b6279c763",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Evaluate the following AI-generated insight responses. For each one, reassess the scorecard below and provide feedback if any score should change.\n\nRespond in this format:\n\n```json\n[\n  {\n    \"index\": 0,\n    \"adjusted_scorecard\": {\n      \"clarity\": 4,\n      \"relevance\": 5,\n      \"insightfulness\": 4,\n      \"actionability\": 5\n    },\n    \"comment\": \"Clear and actionable, but could be slightly more concise.\"\n  }\n]\n\nHere is the response to evaluate (index: {{ $json.index }}):\n\n{{ $json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a business insight evaluator. Review each response and determine whether the scorecard ratings are accurate.\n\nAdjust if needed, and provide a short comment.\n\nRate each category from 1 (poor) to 5 (excellent):\n- clarity\n- relevance\n- insightfulness\n- actionability"
+            }
+          ]
+        },
+        "batching": {
+          "batchSize": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        112,
+        64
+      ],
+      "id": "1b9fbd79-286f-4dbf-b880-34e37f6d316d",
+      "name": "Evaluator"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        64
+      ],
+      "id": "9d382d99-44fe-4663-93f9-821b4fef67d4",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Test Data for Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Data for Evaluator": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Evaluator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Evaluator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "13babcd4-ee55-4e81-b9a8-3242ef6bb0ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "VGoFrxdcNIzcUr3e",
+  "tags": [
+    {
+      "updatedAt": "2025-06-13T00:44:28.800Z",
+      "createdAt": "2025-06-13T00:44:28.800Z",
+      "id": "HMfvMejmdgx6xPHF",
+      "name": "PromptOS"
+    }
+  ]
+}

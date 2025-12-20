@@ -1,0 +1,871 @@
+{
+  "name": "RAGForge - Extractor and Embedder",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload PDF to \"RAG\"",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "document_details",
+              "fieldType": "textarea",
+              "placeholder": "Describe the document, it's meaning and purpose",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "upload_pdf",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        832
+      ],
+      "id": "355e2bed-2eb8-4e5d-adf0-1e857c9ac03c",
+      "name": "On form submission",
+      "webhookId": "186195ae-0096-4bc4-a7e3-e88f8292747c"
+    },
+    {
+      "parameters": {
+        "content": "User to upload PDF and provide context",
+        "height": 100,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "1352bdd2-fdb5-4b0d-8f4c-fdfc1398a245",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "LLM -> Review Extracted data and context",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "0873d093-4a4f-41fa-ba1a-77a7f4c0c275",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "OCR layer later on for fallback",
+        "height": 100,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "1abe4a08-e0b5-4672-bfd8-bf5b65c4c260",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Merge -> Extracted data and context",
+        "height": 100,
+        "width": 210,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "5f634c48-336a-4663-a3ad-9b6194c60282",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Clean Extracted Data",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        512,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "ed7f2c63-664a-4909-9ce2-a850149b5452",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Clean output",
+        "height": 100,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "74f2a409-bd37-4a6d-853c-814d32a6e0c6",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "Extract File",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "e67acc52-6ff7-4e57-b3d6-dc32980be29b",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "HITL loop if LLM is unsure",
+        "height": 100,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "647bf12d-02ac-4f42-aecd-b3d33d13c632",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "### Extract sub workflow",
+        "height": 80,
+        "width": 740,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "1fd7a128-84b3-471c-b8a6-c61c5eec5bc7",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "Upload to Supabase Storage",
+        "height": 100,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1264,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "c9be7568-99e4-499e-b945-2b621012ff2d",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "79e8e011-f264-4420-97f4-fc018e967665",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        512,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "47933bd7-2644-42a0-b277-86a65c4d3cf4",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "0778f980-c0f8-4d7e-a5a5-341e36810773",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1264,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "51b821fe-5a38-4013-882a-faa789e67ce1",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "content": "Insert to Supabase DB",
+        "height": 100,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1488,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "4139b724-8051-4018-99a5-527e70a2830f",
+      "name": "Sticky Note16"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1488,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "36c5ef81-6040-4e35-ac34-4877882f29ca",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {
+        "content": "### Embedder sub workflow",
+        "height": 80,
+        "width": 260,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1888,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "c93ca72e-00d4-46ee-a12f-6afb505ac374",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1888,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "fd66dea9-c79a-4e80-81f5-b84cfeaa64ba",
+      "name": "Sticky Note19"
+    },
+    {
+      "parameters": {
+        "content": "### Content reviewer / preparer",
+        "height": 80,
+        "width": 920,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "f4407db4-48ce-4daf-a5fa-0cc4ae89855e",
+      "name": "Sticky Note20"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "upload_pdf",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        688
+      ],
+      "id": "fd6079a2-c78d-4ec4-bdb5-bc0f5ed1056c",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json;\nconst structured = items[1].json;\n\nreturn [{\n  json: {\n    text: raw.text,\n    document_details: structured.document_details,\n    upload_pdf: structured.upload_pdf,\n    submitted_at: structured.submittedAt || new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        800
+      ],
+      "id": "f177f1bf-00a1-4522-96f9-f8f8d3a4ad56",
+      "name": "Pre-Cleaning"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1024,
+        1008
+      ],
+      "id": "faee1495-f458-48f6-a74c-22f0717edaf4",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-opus-20240229",
+          "mode": "list",
+          "cachedResultName": "Claude Opus 3"
+        },
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        1184
+      ],
+      "id": "dbe7dfd8-38e1-4a5e-9625-28135ad4f985",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "Wmz3AO5pPNbuodMG",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        304,
+        800
+      ],
+      "id": "11312775-14e9-407a-89a9-28f8cddddb23",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"content\": \"Document Type: Project Charter | Document Date: Mar 7, 2025 | Document Author: Marco San Juan\"\n  },\n  {\n    \"content\": \"Problem Statement | Equinox Gold lacks centralized enterprise monitoring capability, resulting in fragmented oversight of technology assets—any system or device that transmits or receives information. Monitoring is currently decentralized across teams and service providers, using siloed tools with limited visibility and coordination. This leads to inefficiencies such as missed or delayed responses, false positives, and no data correlation, increasing operational and security risks.\"\n  },\n  {\n    \"content\": \"Solution Overview | Equinox Gold will establish a centralized enterprise monitoring capability to enhance visibility, coordination, and decision-making across all technology assets. This initiative will create a standardized, scalable approach that improves monitoring effectiveness while aligning with existing operations. The implementation approach will be determined through Discovery and Design, ensuring flexibility based on findings.\"\n  },\n  {\n    \"content\": \"Project Role: IT Architect | Resource Name: Greg Kornatowsky\"\n  },\n  {\n    \"content\": \"Stakeholder: VP | Role & Involvement: Approve key decisions, ensure resource availability, support decision-making | Who: Miller Dussan\"\n  }\n]"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1360,
+        992
+      ],
+      "id": "4320b5aa-adc4-440e-9635-e809b7b13ac3",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "document_vectors",
+          "mode": "list",
+          "cachedResultName": "document_vectors"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        1952,
+        800
+      ],
+      "id": "ba82953f-34b2-488b-a283-e99468e944ab",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LDhBmd2aeXNRoFRh",
+          "name": "Supabase - PromptOS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "batchSize": 200,
+          "stripNewLines": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1952,
+        608
+      ],
+      "id": "4127791c-0628-4877-b9ea-7169bc225044",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        608
+      ],
+      "id": "80299978-8744-4568-bf89-532203ddd400",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2320,
+        832
+      ],
+      "id": "54749fcc-8a82-4b1f-83fe-e58147c3a268",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "jsCode": "const doc = $json.output;\n\nconst safe = str => (str || 'unknown').toLowerCase().replace(/\\s+/g, '-').replace(/[^\\w\\-]/g, '');\nconst baseId = `${safe(doc.document_author)}-${safe(doc.document_type)}`;\nconst datePart = (doc.document_date || '').replace(/[^a-zA-Z0-9]/g, '') || 'unknown';\n\nconst chunks = [];\n\n// Metadata chunk as content only\nconst metadataEntries = Object.entries({\n  'Document Type': doc.document_type,\n  'Document Date': doc.document_date,\n  'Document Author': doc.document_author\n}).filter(([_, v]) => v).map(([k, v]) => `${k}: ${v}`);\nif (metadataEntries.length) {\n  chunks.push({\n    json: {\n      content: metadataEntries.join(' | ')\n    }\n  });\n}\n\n// Sections\n(doc.document_sections || []).forEach((section) => {\n  const title = section.title?.trim() || '';\n  const body = section.content?.trim() || '';\n  const tables = (section.tables || [])\n    .map(table => {\n      const headers = table.headers || [];\n      return table.rows.map(row =>\n        headers.map((h, i) => `${h}: ${row[i] || ''}`).join(' | ')\n      ).join('\\n');\n    })\n    .join('\\n\\n');\n\n  const bodyOrTables = [body, tables].filter(Boolean).join('\\n\\n').trim();\n\n  // NEW: split and extract any standalone role lines\n  const candidateLines = (bodyOrTables || '').split('\\n').map(l => l.trim());\n  candidateLines.forEach(line => {\n    if (/role[:]?/i.test(line) && /\\|/.test(line)) {\n      chunks.push({\n        json: {\n          content: line\n        }\n      });\n    }\n  });\n\n  if (bodyOrTables) {\n    const full = [title, bodyOrTables].filter(Boolean).join(' | ').trim();\n    chunks.push({\n      json: {\n        content: full\n      }\n    });\n  }\n});\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1728,
+        992
+      ],
+      "id": "b83d4f17-3275-4917-91f2-f01d0df55614",
+      "name": "Flatten to vector-friendly chunks",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "Embedding process",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1888,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "130c3bd1-0e19-45a1-96e5-7ecc90ed25ac",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is structured document content previously cleaned and segmented.\n\nSTRUCTURED CONTENT:\n{{ $json.text }}\n\nPlease analyze and plan the final chunk boundaries for vector embedding. Each output chunk should be semantically meaningful and fit within token limits.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a semantic chunking assistant.\n\nYour role is to analyze pre-structured content and generate final chunks for embedding in a vector database.\n\nInstructions:\n\n1. You will receive a list of structured content blocks representing sections or subsections from a document.\n2. Your job is to group, merge, or split these into final chunks that are:\n   - Semantically coherent\n   - Each under ~500 tokens (~2000 characters) unless content integrity requires more\n   - Suitable for embedding and retrieval\n3. Avoid splitting mid-sentence or between logically connected paragraphs.\n4. Do not paraphrase, summarize, or hallucinate — preserve original text.\n5. Maintain the original ordering of content unless there's a strong semantic reason to reorder (rare).\n6. Treat tabular text or list-like entries as atomic when possible.\n\n✅ RETURN FORMAT:\nReturn raw JSON with a top-level array called `output`, consisting only of objects with a single `content` field.\n\nExample:\n[\n  {\n    \"output\": [\n      { \"content\": \"string\" },\n      { \"content\": \"string\" }\n    ]\n  }\n]\n\nNotes:\n- This output will be directly embedded; each `content` block should be optimized for standalone utility in retrieval contexts.\n- No Markdown, no comments, no code fences — just raw JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1120,
+        800
+      ],
+      "id": "11dcc306-2ecc-4e06-bfb0-e81131db1351",
+      "name": "chunk_planner"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the raw PDF content and associated context. Use both the extracted text and any metadata to structure and flatten the document.\n\nTEXT:\n{{ $json.text }}\n\nCONTEXT / METADATA (may be empty or partial):\n{{ $json.document_details || 'null' }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a document structuring and flattening assistant.\nYour job is to analyze raw PDF content and produce clean, structured JSON ready for downstream chunking and embedding into a vector database.\n\nInstructions:\n\n1. Use the text and any provided metadata to determine high-level context.\n2. Segment the text into meaningful sections and subsections using clear headers, numbered patterns, or layout hints.\n3. Detect tabular data within sections and extract it as a structured tables array before transforming.\n   - Preserve row and column boundaries.\n   - Transform tables into readable semantic units without losing cell granularity.\n4. For each section and subsection, transform the title, content, and tables into coherent semantic units:\n   - Each unit should be self-contained and conceptually distinct.\n   - Preserve exact original language with no summarizing, paraphrasing, or hallucinating.\n5. Maintain distinct boundaries between subsections — do not merge unrelated content into a single unit.\n6. Clean all text by:\n   - Stripping dotted leader lines (e.g., \"Section Name ............ 3\").\n   - Removing layout artifacts or scan noise (e.g., DocuSign IDs, headers/footers, page numbers).\n   - Ignoring or flattening repeated Table of Contents lines unless they add semantic value.\n\nThis output will be passed to a downstream LLM or process for final chunk planning and token-based slicing.\n\n✅ RETURN FORMAT:  \nReturn raw JSON with a top-level array called `output`, consisting only of objects with a single `content` field.\n\nExample:  \n[\n  {\n    \"output\": [\n      { \"content\": \"string\" },\n      { \"content\": \"string\" }\n    ]\n  }\n]\n\nNotes:  \n- `output` must be a flattened list of all semantic units representing the full document.\n- Do not include `document_type`, `document_date`, `document_author`, or any metadata.\n- Output only raw JSON — no Markdown, no code fences."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        768,
+        800
+      ],
+      "id": "6755bca2-1be8-4023-b08e-dd1c357304fb",
+      "name": "content_cleaner"
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_CHARS = 2000; // Approx ~500 tokens\nconst chunks = [];\n\n($json.output || []).forEach(item => {\n  const content = item.content?.trim();\n  if (!content) return;\n\n  if (content.length <= MAX_CHARS) {\n    chunks.push({ json: { content } });\n  } else {\n    let start = 0;\n    while (start < content.length) {\n      const chunk = content.slice(start, start + MAX_CHARS);\n      chunks.push({ json: { content: chunk } });\n      start += MAX_CHARS;\n    }\n  }\n});\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        800
+      ],
+      "id": "6a5eedc2-3523-415f-940a-1fda8d40581d",
+      "name": "token_guard"
+    },
+    {
+      "parameters": {
+        "content": "Understand use of metadata",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2128,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "228e5804-2b7b-4323-8133-941b11d86f05",
+      "name": "Sticky Note21"
+    },
+    {
+      "parameters": {
+        "content": "Consider making use of metadata",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1264,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "a013c2b5-ffb8-4a3f-8257-6fcdd50b5d61",
+      "name": "Sticky Note22"
+    }
+  ],
+  "pinData": {
+    "chunk_planner": [
+      {
+        "json": {
+          "output": [
+            {
+              "content": "1. Introduction\nThis guide is intended to help the Compass Business Operations team to support the RFID system of the Universal Fare Gate Access Program (UFGAP)."
+            },
+            {
+              "content": "2. System Overview\nThe UFGAP RFID system has been designed to create a hands-free experience through the ADA FareGate for approved users with disabilities. The system was developed by Hyperlight Systems, in partnership with TransLink."
+            },
+            {
+              "content": "2.1 Components\nFor each ADA FareGate, the following RFID system components exists:\n\nComponent Description\nRFID tag\nAn RFID tag is issued to a TransLink customer needing assistance to tap (CNAT). When a CNAT approaches an ADA FareGate at a station, the RFID tag is detected by the RFID antenna which powers up the RFID tag to so it can capture its tag ID.\nRFID antenna\nAn RFID antenna at a station captures the tag ID from the RFID tag and sends the data to the RFID reader to be checked for validity prior to sending the data to TransLink’s Integration Hub (IH).\nRFID reader\nThe RFID reader is the device that evaluates a customer’s RFID tag. Embedded within the RFID reader is Hyperlight Systems’ RFID Notifier software which determines whether a tag ID is valid. If a tag is valid, RFID Notifier will send a message to IH to open the ADA FareGate.\n\nOther components that make up the RFID system include:\n\nComponent Description\nNetwork switch\nHyperlight Systems’-managed network switches are located in the Electrical Equipment Rooms (EER) at TransLink stations. The total number of switches at each station varies depending on the set up of the ADA FareGate at each station. Each RFID Reader is connected to the network switch, which is in-turn connected to the Compass Router. It is through this physical connection that the RFID Notifier software and IH are able to communicate.\nSmartConsole\nSmartConsole is the monitoring software for all the RFID readers at all TransLink stations."
+            },
+            {
+              "content": "2.2 Interfaces\nFor detailed information, please refer to Proximity Enabled Accessible Entrances RFID - Interface_Requirements.docx [insert link]"
+            },
+            {
+              "content": "3. Points of Contact"
+            },
+            {
+              "content": "3.1 Support Contact\nSupport Hours during business hours\nResponse time during business day (8:00 A.M. to 5:00 P.M., Monday to Friday Pacific Standard Time) is as follows:\nBy phone at 778-819-0745 Will respond within 8 hours\nBy email at support@hyperlight.systems Will respond within 8 hours\nSupport Hours outside business hours\nBy phone at 778-819-0745 Will respond within 24 hours\nBy email at support@hyperlight.systems Will respond within 24 hours"
+            },
+            {
+              "content": "3.2 Escalation Contact\n# Escalation Reason Hyperlight TransLink\n1\nTicket escalation to enquire about a specific ticket\nMarco San Juan\nmarcos@hyperlight.systems\n778.317.5181\nHan Wei Chan\nhchan@hyperlight.systems\n604.630.9907\nMarilyn Morley\nMarilyn.Morley@translink.ca\n778.375.6554 / 604.761.2804\n2\nSLA escalation for questions and queries regarding the SLA\nMarco San Juan\nmarcos@hyperlight.systems\n778.317.5181\nAshish Sachdeva\nashish@hyperlight.systems\n778.819.6746\nMarilyn Morley\nMarilyn.Morley@translink.ca\n778.375.6554 / 604.761.2804"
+            },
+            {
+              "content": "4. Operations"
+            },
+            {
+              "content": "4.1 Operational Tasks\nThe operational tasks of the RFID system can be divided into four (4) main categories:\n1) Incidents: These refer to tasks required to address an issue in the system. The two (2) main incidents that can occur in the RFID system are a) Read Range issues and b) Gate not opening.\n2) Requests: These refer to tasks required to fulfill an ‘ask’ from TransLink.\n3) Maintenance: These refer to recurring tasks that are conducted on a regular basis (i.e. weekly, monthly, etc) because they are required to ensure that the RFID system runs at optimal performance.\n4) User Training: This refers to sessions where Hyperlight Systems supports TransLink authorized Occupational Therapists in the training of a customer who applied to use the RFID system."
+            },
+            {
+              "content": "4.2 Support Requests\nIncidents and Requests are further classified as support requests as they are not recurring tasks that are required to keep the system up and running. All support requests can be submitted through either of the following methods:\n• Email: support@hyperlight.systems\n• Phone: 778-819-0745\n• Hyperlight Systems Ticketing System: https://support.hyperlight.systems"
+            },
+            {
+              "content": "4.2.1 Incidents\nThe two (2) main incidents that can occur in the RFID system are:\na. Read Range issues\nWhen a ‘Read Range’ issue occurs, the first step prior to contacting Hyperlight Systems is to:\n1) Confirm that there is no issue with Integration Hub (IH)\n2) Collect the following information:\na) Station name\nb) Entrance\nc) Gate ID\nd) Direction of Travel\ne) Time\nf) Incident description\ng) Tag ID of the customer\nh) Attachments (e.g., Integration Hub logs)\n3) Log into SmartConsole to verify RFID hardware health (i.e. network, hardware, software, environment) and log data\n\n4) Check for the following:\na) If one RED status exists, contact Hyperlight Systems for immediate assistance\nb) Otherwise:\ni) Confirm whether issue is ‘long’ or ‘short’ read range (acceptable range is 1m to 2.5m)\n▪ Alternatively, ask if the gate opens too early (when user is far away) or too late (when user is too close)\nii) Confirm how customer is holding the RFID tag\niii) Confirm all possible interferences for RFID tag\niv) Check that antenna angle has not changed since installation (refer to antenna angle installation data)\nb. Gate not opening\nWhen a ‘Gate not opening’ issue occurs, the first step prior to contacting Hyperlight Systems is to:\n1) Confirm that there is no issue with Integration Hub (IH)\n2) Collect the following information:\na) Station name\nb) Entrance\nc) Gate ID\nd) Direction of Travel\ne) Time\nf) Incident description\ng) Tag ID of the customer\nh) Attachments (e.g., Integration Hub logs)\n3) Log into SmartConsole to verify RFID hardware health (i.e. network, hardware, software, environment) and log data\n4) Check for the following:\na) If one RED status exists, contact Hyperlight Systems for immediate assistance\nb) Otherwise:\ni) Confirm whether log data exists during the day/time the issue was reported.\n▪ If log data exists, that means antenna hardware should be working as expected. Further troubleshooting will be required on the integration between RFID Notifier and IH\nii) Check that antenna angle has not changed since installation (refer to antenna angle installation data)"
+            },
+            {
+              "content": "4.2.2 System Alerts and Notifications\nThe SmartConsole monitoring software actively monitors for potential issues with the RFID hardware / software. If SmartConsole detects a potential issue, it will send a system alert / notification via SMS and email to the TransLink and Hyperlight Systems support teams. The alert / notification can potentially end up being an incident that needs to be resolved."
+            },
+            {
+              "content": "4.2.3 Support Tiers\nThere are three (3) types of support tiers that will be provided by Hyperlight Systems. The following tables shows the standard operational tasks that fall under each support tier:\n\nTier 1 Tier 2 Tier 3\n▪ Angle Adjustment\n▪ Manual Reboot\n▪ Card Replacement\n▪ Support TransLink (e.g. investigating IH related issue)\n▪ Configuration changes (e.g. RSSI filtering, power adjustments, etc)\n▪ Cable upgrade / replacement\n▪ Hardware replacement\n▪ Firmware / software changes"
+            },
+            {
+              "content": "4.2.4 Requests\nRequests need to be submitted with requirements information for review by Hyperlight Systems. If the request is deemed too large to be done operationally, it will be treated as a new project. This will require a statement of work to be created and submitted to TransLink for approval before proceeding.\nWhen a request needs to be treated as a project\nA request will be treated as a project if it meets the following criteria:\n- It is not a standard operational task\n- Request is estimated to take more than 8h of effort\n- Coordination between more than one (1) team is required"
+            },
+            {
+              "content": "4.3 Maintenance\nThe following maintenance tasks need to be conducted on a regular basis in order to maintain the RFID system:\n# Task Description Frequency\n1 Heart Beat - An automated task that ran through SmartConsole and the RFID notifier software that periodically checks that an RFID reader is up and running.\nDaily\n\n2 On-site spot checks to ensure that the read-range specifications for each ADA FareGate is in-tact (1m to 2.5m)\nMonthly\n3 Back up of RFID Reader logs and Smart Console databases\nMonthly\n3 RFID Reader firmware patching and updating (Requires EER access)\nAs required\n4 RFID Notifier patching and updating (Requires TransLink Network access)\nAs required\n5 Smart Console patching and updating (Requires TransLink Network access)\nAs required\n6 Network switch patching and updating (Requires EER access)\nAs required"
+            },
+            {
+              "content": "4.3.1 User Training\n[Placeholder]"
+            },
+            {
+              "content": "5. Reference Documentation\nThe following list of documentation was created during the UFGAP project phase and can be referenced for further detail / information with regards to the RFID:\n# Document Name Location\n1\nConstruction Drawings (electrical, architectural and structural)\n2 SmartConsole Functional Specifications Document\n3 SmartConsole User Manual\n4 SmartConsole Release Notes\n5 RFID Notifier Release Notes\n6 Interface Requirements Document\n7 Service Level Agreement (SLA)"
+            }
+          ]
+        }
+      }
+    ],
+    "content_cleaner": [
+      {
+        "json": {
+          "text": "{\n  \"output\": [\n    {\n      \"content\": \"1. Introduction\\nThis guide is intended to help the Compass Business Operations team to support the RFID system of the Universal Fare Gate Access Program (UFGAP).\"\n    },\n    {\n      \"content\": \"2. System Overview\\nThe UFGAP RFID system has been designed to create a hands-free experience through the ADA FareGate for approved users with disabilities. The system was developed by Hyperlight Systems, in partnership with TransLink.\"\n    },\n    {\n      \"content\": \"2.1 Components\\nFor each ADA FareGate, the following RFID system components exists:\\n\\nComponent Description\\nRFID tag\\nAn RFID tag is issued to a TransLink customer needing assistance to tap (CNAT). When a CNAT approaches an ADA FareGate at a station, the RFID tag is detected by the RFID antenna which powers up the RFID tag to so it can capture its tag ID.\\nRFID antenna\\nAn RFID antenna at a station captures the tag ID from the RFID tag and sends the data to the RFID reader to be checked for validity prior to sending the data to TransLink’s Integration Hub (IH).\\nRFID reader\\nThe RFID reader is the device that evaluates a customer’s RFID tag. Embedded within the RFID reader is Hyperlight Systems’ RFID Notifier software which determines whether a tag ID is valid. If a tag is valid, RFID Notifier will send a message to IH to open the ADA FareGate.\\n\\nOther components that make up the RFID system include:\\n\\nComponent Description\\nNetwork switch\\nHyperlight Systems’-managed network switches are located in the Electrical Equipment Rooms (EER) at TransLink stations. The total number of switches at each station varies depending on the set up of the ADA FareGate at each station. Each RFID Reader is connected to the network switch, which is in-turn connected to the Compass Router. It is through this physical connection that the RFID Notifier software and IH are able to communicate.\\nSmartConsole\\nSmartConsole is the monitoring software for all the RFID readers at all TransLink stations.\"\n    },\n    {\n      \"content\": \"2.2 Interfaces\\nFor detailed information, please refer to Proximity Enabled Accessible Entrances RFID - Interface_Requirements.docx [insert link]\"\n    },\n    {\n      \"content\": \"3. Points of Contact\"\n    },\n    {\n      \"content\": \"3.1 Support Contact\\nSupport Hours during business hours\\nResponse time during business day (8:00 A.M. to 5:00 P.M., Monday to Friday Pacific Standard Time) is as follows:\\nBy phone at 778-819-0745 Will respond within 8 hours\\nBy email at support@hyperlight.systems Will respond within 8 hours\\nSupport Hours outside business hours\\nBy phone at 778-819-0745 Will respond within 24 hours\\nBy email at support@hyperlight.systems Will respond within 24 hours\"\n    },\n    {\n      \"content\": \"3.2 Escalation Contact\\n# Escalation Reason Hyperlight TransLink\\n1\\nTicket escalation to enquire about a specific ticket\\nMarco San Juan\\nmarcos@hyperlight.systems\\n778.317.5181\\nHan Wei Chan\\nhchan@hyperlight.systems\\n604.630.9907\\nMarilyn Morley\\nMarilyn.Morley@translink.ca\\n778.375.6554 / 604.761.2804\\n2\\nSLA escalation for questions and queries regarding the SLA\\nMarco San Juan\\nmarcos@hyperlight.systems\\n778.317.5181\\nAshish Sachdeva\\nashish@hyperlight.systems\\n778.819.6746\\nMarilyn Morley\\nMarilyn.Morley@translink.ca\\n778.375.6554 / 604.761.2804\"\n    },\n    {\n      \"content\": \"4. Operations\"\n    },\n    {\n      \"content\": \"4.1 Operational Tasks\\nThe operational tasks of the RFID system can be divided into four (4) main categories:\\n1) Incidents: These refer to tasks required to address an issue in the system. The two (2) main incidents that can occur in the RFID system are a) Read Range issues and b) Gate not opening.\\n2) Requests: These refer to tasks required to fulfill an ‘ask’ from TransLink.\\n3) Maintenance: These refer to recurring tasks that are conducted on a regular basis (i.e. weekly, monthly, etc) because they are required to ensure that the RFID system runs at optimal performance.\\n4) User Training: This refers to sessions where Hyperlight Systems supports TransLink authorized Occupational Therapists in the training of a customer who applied to use the RFID system.\"\n    },\n    {\n      \"content\": \"4.2 Support Requests\\nIncidents and Requests are further classified as support requests as they are not recurring tasks that are required to keep the system up and running. All support requests can be submitted through either of the following methods:\\n• Email: support@hyperlight.systems\\n• Phone: 778-819-0745\\n• Hyperlight Systems Ticketing System: https://support.hyperlight.systems\"\n    },\n    {\n      \"content\": \"4.2.1 Incidents\\nThe two (2) main incidents that can occur in the RFID system are:\\na. Read Range issues\\nWhen a ‘Read Range’ issue occurs, the first step prior to contacting Hyperlight Systems is to:\\n1) Confirm that there is no issue with Integration Hub (IH)\\n2) Collect the following information:\\na) Station name\\nb) Entrance\\nc) Gate ID\\nd) Direction of Travel\\ne) Time\\nf) Incident description\\ng) Tag ID of the customer\\nh) Attachments (e.g., Integration Hub logs)\\n3) Log into SmartConsole to verify RFID hardware health (i.e. network, hardware, software, environment) and log data\\n\\n4) Check for the following:\\na) If one RED status exists, contact Hyperlight Systems for immediate assistance\\nb) Otherwise:\\ni) Confirm whether issue is ‘long’ or ‘short’ read range (acceptable range is 1m to 2.5m)\\n▪ Alternatively, ask if the gate opens too early (when user is far away) or too late (when user is too close)\\nii) Confirm how customer is holding the RFID tag\\niii) Confirm all possible interferences for RFID tag\\niv) Check that antenna angle has not changed since installation (refer to antenna angle installation data)\\nb. Gate not opening\\nWhen a ‘Gate not opening’ issue occurs, the first step prior to contacting Hyperlight Systems is to:\\n1) Confirm that there is no issue with Integration Hub (IH)\\n2) Collect the following information:\\na) Station name\\nb) Entrance\\nc) Gate ID\\nd) Direction of Travel\\ne) Time\\nf) Incident description\\ng) Tag ID of the customer\\nh) Attachments (e.g., Integration Hub logs)\\n3) Log into SmartConsole to verify RFID hardware health (i.e. network, hardware, software, environment) and log data\\n4) Check for the following:\\na) If one RED status exists, contact Hyperlight Systems for immediate assistance\\nb) Otherwise:\\ni) Confirm whether log data exists during the day/time the issue was reported.\\n▪ If log data exists, that means antenna hardware should be working as expected. Further troubleshooting will be required on the integration between RFID Notifier and IH\\nii) Check that antenna angle has not changed since installation (refer to antenna angle installation data)\"\n    },\n    {\n      \"content\": \"4.2.2 System Alerts and Notifications\\nThe SmartConsole monitoring software actively monitors for potential issues with the RFID hardware / software. If SmartConsole detects a potential issue, it will send a system alert / notification via SMS and email to the TransLink and Hyperlight Systems support teams. The alert / notification can potentially end up being an incident that needs to be resolved.\"\n    },\n    {\n      \"content\": \"4.2.3 Support Tiers\\nThere are three (3) types of support tiers that will be provided by Hyperlight Systems. The following tables shows the standard operational tasks that fall under each support tier:\\n\\nTier 1 Tier 2 Tier 3\\n▪ Angle Adjustment\\n▪ Manual Reboot\\n▪ Card Replacement\\n▪ Support TransLink (e.g. investigating IH related issue)\\n▪ Configuration changes (e.g. RSSI filtering, power adjustments, etc)\\n▪ Cable upgrade / replacement\\n▪ Hardware replacement\\n▪ Firmware / software changes\"\n    },\n    {\n      \"content\": \"4.2.4 Requests\\nRequests need to be submitted with requirements information for review by Hyperlight Systems. If the request is deemed too large to be done operationally, it will be treated as a new project. This will require a statement of work to be created and submitted to TransLink for approval before proceeding.\\nWhen a request needs to be treated as a project\\nA request will be treated as a project if it meets the following criteria:\\n- It is not a standard operational task\\n- Request is estimated to take more than 8h of effort\\n- Coordination between more than one (1) team is required\"\n    },\n    {\n      \"content\": \"4.3 Maintenance\\nThe following maintenance tasks need to be conducted on a regular basis in order to maintain the RFID system:\\n# Task Description Frequency\\n1 Heart Beat - An automated task that ran through SmartConsole and the RFID notifier software that periodically checks that an RFID reader is up and running.\\nDaily\\n\\n2 On-site spot checks to ensure that the read-range specifications for each ADA FareGate is in-tact (1m to 2.5m)\\nMonthly\\n3 Back up of RFID Reader logs and Smart Console databases\\nMonthly\\n3 RFID Reader firmware patching and updating (Requires EER access)\\nAs required\\n4 RFID Notifier patching and updating (Requires TransLink Network access)\\nAs required\\n5 Smart Console patching and updating (Requires TransLink Network access)\\nAs required\\n6 Network switch patching and updating (Requires EER access)\\nAs required\"\n    },\n    {\n      \"content\": \"4.3.1 User Training\\n[Placeholder]\"\n    },\n    {\n      \"content\": \"5. Reference Documentation\\nThe following list of documentation was created during the UFGAP project phase and can be referenced for further detail / information with regards to the RFID:\\n# Document Name Location\\n1\\nConstruction Drawings (electrical, architectural and structural)\\n2 SmartConsole Functional Specifications Document\\n3 SmartConsole User Manual\\n4 SmartConsole Release Notes\\n5 RFID Notifier Release Notes\\n6 Interface Requirements Document\\n7 Service Level Agreement (SLA)\"\n    }\n  ]\n}"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Pre-Cleaning": {
+      "main": [
+        [
+          {
+            "node": "content_cleaner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "content_cleaner",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "chunk_planner",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Pre-Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "chunk_planner",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "content_cleaner": {
+      "main": [
+        [
+          {
+            "node": "chunk_planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chunk_planner": {
+      "main": [
+        [
+          {
+            "node": "token_guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token_guard": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fcbeb2e7-8ba7-449b-9687-367455ebbb28",
+  "meta": {
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "Z1IpndZ8ZbD2ETs1",
+  "tags": [
+    {
+      "updatedAt": "2025-06-13T00:44:28.800Z",
+      "createdAt": "2025-06-13T00:44:28.800Z",
+      "id": "HMfvMejmdgx6xPHF",
+      "name": "PromptOS"
+    }
+  ]
+}

@@ -1,0 +1,941 @@
+{
+  "name": "PromptOS-Playground",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Insight Navigator",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "user_query",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "insight_type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "summary"
+                  },
+                  {
+                    "option": "trend"
+                  },
+                  {
+                    "option": "anomaly"
+                  },
+                  {
+                    "option": "recommendation"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        160
+      ],
+      "id": "70770704-6a6a-47ad-95d5-f04518c68cbc",
+      "name": "On form submission",
+      "webhookId": "61d54440-2529-40e1-9dd3-e9603f0cbe00",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = ($input.first().json[\"user_query\"] || \"\").toLowerCase();\n\n// Match for common insight intents\nif (\n  input.includes(\"trend\") ||\n  input.includes(\"increase\") ||\n  input.includes(\"decrease\") ||\n  input.includes(\"change over time\")\n) {\n  return [{ json: { route: \"trend\" } }];\n}\n\nif (\n  input.includes(\"why\") ||\n  input.includes(\"cause\") ||\n  input.includes(\"unusual\") ||\n  input.includes(\"unexpected\") ||\n  input.includes(\"outlier\")\n) {\n  return [{ json: { route: \"anomaly\" } }];\n}\n\nif (\n  input.includes(\"summary\") ||\n  input.includes(\"recap\") ||\n  input.includes(\"overview\")\n) {\n  return [{ json: { route: \"summary\" } }];\n}\n\nif (\n  input.includes(\"should we\") ||\n  input.includes(\"next step\") ||\n  input.includes(\"recommend\")\n) {\n  return [{ json: { route: \"recommendation\" } }];\n}\n\n// Fallback\nreturn [{ json: { route: \"summary\" } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        160
+      ],
+      "id": "a1c60578-561f-44e3-b213-6cd2a97e61a8",
+      "name": "Router Node",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const mcp = $json[\"mcp\"];\nconst { type, user_input, instruction, memory } = mcp;\n\n// Optional: future memory injection\nconst memoryBlock = Object.keys(memory || {}).length > 0\n  ? `\\n[Memory]\\n${JSON.stringify(memory, null, 2)}\\n`\n  : \"\";\n\nconst prompt = `\nYou are an Insight Agent specializing in surfacing business-relevant insights from internal data sources.\n\n${memoryBlock}\n\n[User Query]\n${user_input}\n\n[Insight Type]\n${type}\n\n[Instruction]\n${instruction}\n\n[Your Response]\n`;\n\nreturn [{ json: { prompt, type } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        160
+      ],
+      "id": "5e128f40-188f-4e1a-90b0-af7f18e7eab4",
+      "name": "Generate Prompt from MCP",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "vRjzDA3odWrYEsYa",
+          "mode": "list",
+          "cachedResultName": "PromptOS-ParallelGen-Vote"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        192
+      ],
+      "id": "3e107f95-5009-48c3-8709-8843659c477d",
+      "name": "Run PromptOS-Vote Engine"
+    },
+    {
+      "parameters": {
+        "content": "Phase 1: Simple Prompt Builder (earlier version; build one big string from MCP)",
+        "height": 320,
+        "width": 890
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        64
+      ],
+      "typeVersion": 1,
+      "id": "832b9d8d-25bc-49ad-a313-e2babb2c8c1d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "VGoFrxdcNIzcUr3e",
+          "mode": "list",
+          "cachedResultName": "PromptOS-Evaluator"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        192
+      ],
+      "id": "4d8e9aa2-d9ac-40b4-a68e-dbedca05eef6",
+      "name": "Run PromptOS-Evaluator"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all();  // <-- this grabs all 3 items\n\nconst outputs = input.map((item, index) => {\n  return {\n    json: {\n      index,\n      output: item.json.output,\n      scorecard: item.json.scorecard\n    }\n  };\n});\n\nreturn outputs;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        192
+      ],
+      "id": "dfac8e10-cf14-4e32-8440-c852b10f95f4",
+      "name": "Prep Evaluator Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const voteResults = $items('Run PromptOS-Vote Engine').map(i => i.json);\nconst evalItems = $items('Run PromptOS-Evaluator');\n\n// Flatten evaluator outputs\nconst evalResults = evalItems.flatMap(item => item.json.output);\n\n// Merge by index\nreturn voteResults.map((response, idx) => {\n  const evaluation = evalResults.find(e => e.index === idx);\n  return {\n    json: {\n      ...response,\n      adjusted_scorecard: evaluation?.adjusted_scorecard || {},\n      evaluator_comment: evaluation?.comment || \"No comment returned.\"\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        192
+      ],
+      "id": "4d22e62d-a68a-40e4-a97c-aa8d312811b4",
+      "name": "Merge vote and evaluation"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst labels = ['A', 'B', 'C', 'D', 'E']; // Extend if needed\n\nconst ranked = items.map((i, idx) => {\n  const data = i.json;\n  const score = Object.values(data.adjusted_scorecard).reduce((sum, val) => sum + val, 0);\n  return {\n    ...data,\n    total_score: score,\n    label: labels[idx] || `Alt-${idx + 1}`\n  };\n}).sort((a, b) => b.total_score - a.total_score)\n  .map((item, idx) => ({\n    json: {\n      ...item,\n      rank: idx + 1\n    }\n  }));\n\nreturn ranked;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        192
+      ],
+      "id": "73202b7a-c785-45c1-adbc-32ea7faca7dc",
+      "name": "Rank Responses by Adjusted Score"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "top_response",
+              "fieldType": "textarea",
+              "placeholder": "={{ $json.top_response }}",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "action",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Accept"
+                  },
+                  {
+                    "option": "Edit"
+                  },
+                  {
+                    "option": "Rerun Vote"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "edited_output",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "reviewer_notes",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        2848,
+        160
+      ],
+      "id": "0a023f05-71a8-47dd-a4c3-9135813f9583",
+      "name": "HITL Override Form",
+      "webhookId": "f0773554-15f5-47e8-80c9-e4e8a79a1fac",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const top = $input.all().find(i => i.json.rank === 1);\n\nreturn [\n  {\n    json: {\n      top_response: top.json.output\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        160
+      ],
+      "id": "099c1a58-85f1-436e-90b1-f7a15675590c",
+      "name": "Select Top Response",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "HITL Decision Output",
+        "completionMessage": "🎯 HITL review complete. Response will now proceed based on your action.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 1,
+      "position": [
+        3040,
+        160
+      ],
+      "id": "66a193aa-c0f3-493e-9829-ec4719f8a874",
+      "name": "Form Ending",
+      "webhookId": "759d6d01-6521-45fd-934b-0e5a7f3fb12f",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const { action, top_response, edited_output, reviewer_notes } = $json;\n\nlet final_response;\n\nif (action === \"Edit\") {\n  final_response = edited_output || \"[No edit provided]\";\n} else if (action === \"Accept\") {\n  final_response = top_response;\n} else if (action === \"Rerun Vote\") {\n  // You can catch this in downstream routing\n  return [\n    {\n      json: {\n        rerun: true,\n        reason: reviewer_notes || \"Manual override: Rerun requested\"\n      }\n    }\n  ];\n}\n\nreturn [\n  {\n    json: {\n      final_response,\n      HITL_action: action,\n      HITL_notes: reviewer_notes || \"\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        160
+      ],
+      "id": "7f3a0f52-d5d0-48f7-bd7d-ef7b6f7cf328",
+      "name": "Resolve HITL Action",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06f1e40f-3ef7-4643-9831-3e2da0830973",
+              "name": "top_response",
+              "value": "={{ $json.top_response }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        160
+      ],
+      "id": "5cd15d6e-2e76-4db0-9092-f14c15655e4f",
+      "name": "Set Default Responses",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "promptos-playground",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        1120
+      ],
+      "id": "1438590c-756a-4ab2-b546-c27bb1efd7aa",
+      "name": "Webhook",
+      "webhookId": "259800e4-5d3b-47cf-8ee8-000c0824dfe5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2944,
+        752
+      ],
+      "id": "95475ff6-932c-4b26-9aa8-ac9623d41ed9",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "HITL stuff",
+        "height": 280,
+        "width": 1030
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2400,
+        80
+      ],
+      "typeVersion": 1,
+      "id": "0e8150fe-fd52-46e6-bf39-443d40a1ca5d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Split into MCP and vote outputs\nconst mcp = items.find(i => i.json?.mcp)?.json?.mcp || {};\nconst voteItems = items.filter(i => i.json?.output);\n\n// Extract winning item\nconst winnerItem = voteItems.find(i => i.json?.winner);\nconst finalResponse = winnerItem?.json?.output || \"No winning response available\";\nconst winnerLabel = winnerItem?.json?.label || \"unknown\";\nconst winnerRationale = winnerItem?.json?.evaluator_comment || \"No rationale provided\";\n\n// Build vote breakdown array (cleaned JSONs only)\nconst voteBreakdown = voteItems.map(item => ({\n  label: item.json?.label || \"unknown\",\n  output: item.json?.output,\n  source_node: item.json?.source_node,\n  scorecard: item.json?.scorecard,\n  adjusted_scorecard: item.json?.adjusted_scorecard,\n  evaluator_comment: item.json?.evaluator_comment,\n  total_score: item.json?.total_score,\n  rank: item.json?.rank,\n  winner: item.json?.winner || false\n}));\n\n// Assemble final output\nreturn [{\n  json: {\n    mcp,\n    final_response: finalResponse,\n    vote_breakdown: voteBreakdown,\n    vote_result: {\n      winner: winnerLabel,\n      rationale: winnerRationale\n    },\n    HITL_action: \"Auto-Accept\",\n    HITL_notes: \"No manual override applied\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        752
+      ],
+      "id": "7939a82e-c855-4055-a965-ebc296e29f0c",
+      "name": "Prepare Final Response"
+    },
+    {
+      "parameters": {
+        "content": "For Webhook",
+        "height": 220,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2624,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "60b78da5-6740-4dee-a363-f30447c948fa",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sections",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        560
+      ],
+      "id": "99678ab1-b87c-47e5-af0e-a64d36be06f8",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        352
+      ],
+      "id": "83f2cac9-3fdc-4d78-a480-8ba6420106fd",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const mcp = $json.mcp;\nconst type = mcp.type;\nconst sections = [];\n\nif (mcp.user_input)\n  sections.push({ label: \"User Query\", content: mcp.user_input, type });\n\nif (mcp.instruction)\n  sections.push({ label: \"Instruction\", content: mcp.instruction, type });\n\nif (mcp.memory && Object.keys(mcp.memory).length)\n  sections.push({ label: \"Memory\", content: JSON.stringify(mcp.memory, null, 2), type });\n\nreturn [{ json: { sections } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        560
+      ],
+      "id": "0142d7ff-f5e3-4779-843b-adf54ba49375",
+      "name": "Build sections array"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.label }}:  \n{{ $json.content }}\n\n[Your Response]",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        64,
+        560
+      ],
+      "id": "4e7a84e3-bad8-44d4-8937-d1e96a7e8408",
+      "name": "Generate Section Response"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        752
+      ],
+      "id": "2af85b85-c917-4538-bd3d-90d036a6be89",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Merge all section responses\nconst merged = items.map((item, i) =>\n  `Section ${i + 1} Insight:\\n${item.json.text}`\n).join('\\n\\n');\n\nreturn [{\n  json: {\n    merge_input: merged\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        560
+      ],
+      "id": "9565d433-225d-4cb2-a114-7fbfdd670753",
+      "name": "Prepare Merge Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an Insight Agent.\n\nBelow are partial insights generated from structured prompt sections.\n\nYour task: Write a clear, direct summary of what changed in customer satisfaction between Q2 and Q3.\n\nStart with a concise, data-backed summary (1–2 sentences max).\n\nThen, elaborate briefly on contributing factors and context if needed.\n\nOptionally, include industry or trend-level framing if relevant.\n\nAvoid filler or generic statements. Prioritize clarity, actionability, and insight.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        624,
+        560
+      ],
+      "id": "d9a95313-2e0d-4a44-9921-276e9f0cab05",
+      "name": "LLM Merge Prompt"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        752
+      ],
+      "id": "8741a10c-e2e6-4119-870b-dea5265ed430",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Phase 2: Structured Prompt Sections (Split the MCP into parts (e.g. user query, instruction) and runan each through the LLM individually)",
+        "height": 480,
+        "width": 1420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -496,
+        448
+      ],
+      "typeVersion": 1,
+      "id": "16831ce4-21d8-4e41-8a16-c71fcbaa3c80",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea29e7d8-9a35-434b-b304-97ebeb406664",
+              "name": "prompt",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "3080820f-fda4-4e2b-a0ee-c25a57517752",
+              "name": "type",
+              "value": "={{ \n  $node[\"Build MCP - Structured\"].json.mcp?.type \n    || $node[\"Build MCP - Structured - Test\"].json.mcp?.type \n    || \"unknown\" \n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        560
+      ],
+      "id": "a8da6390-5a32-4580-b368-fab82dc01806",
+      "name": "Prepare Vote Payload"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $node[\"On form submission\"].json[\"user_query\"] || \"\";\nconst insightType = $node[\"On form submission\"].json[\"insight_type\"] || \"summary\";\nconst route = $json[\"route\"] || insightType || \"summary\"; // prioritizes routing output if available\n\nconst instructionMap = {\n  summary: \"Generate a concise summary of the key findings.\",\n  trend: \"Highlight notable trends or changes over time.\",\n  anomaly: \"Identify unusual patterns, anomalies, or outliers.\",\n  recommendation: \"Provide recommendations based on the data insights.\"\n};\n\nconst instruction = instructionMap[route] || instructionMap[\"summary\"];\n\nreturn [{\n  json: {\n    mcp: {\n      type: route,\n      user_input: input,\n      memory: {},\n      instruction: instruction\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        160
+      ],
+      "id": "3424c0af-68fa-48cd-be4a-33333f0a8ee0",
+      "name": "Build MCP - Simple",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json.body?.user_query || \"\";\nconst route = $json.body?.insight_type || \"summary\";\n\n// Instruction map\nconst instructionMap = {\n  summary: \"Generate a concise summary of the key findings.\",\n  trend: \"Highlight notable trends or changes over time.\",\n  anomaly: \"Identify unusual patterns, anomalies, or outliers.\",\n  recommendation: \"Provide recommendations based on the data insights.\"\n};\n\nconst instruction = instructionMap[route] || instructionMap[\"summary\"];\n\nreturn [{\n  json: {\n    mcp: {\n      type: route,\n      user_input: input,\n      memory: {},\n      instruction: instruction\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        1104
+      ],
+      "id": "591490e3-bb3b-4ef1-a37c-edd50cb92428",
+      "name": "Build MCP - Structured"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": " {\n    \"mcp\": {\n      \"type\": \"trend\",\n      \"user_input\": \"What changed in customer satisfaction between Q2 and Q3?\",\n      \"memory\": {},\n      \"instruction\": \"Highlight notable trends or changes over time.\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -848,
+        352
+      ],
+      "id": "71f51710-ad33-4e74-944d-37c5329abe23",
+      "name": "Build MCP - Structured - Test",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2352,
+        768
+      ],
+      "id": "35edab79-bb88-4df6-97dd-19436dcecb4a",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Router Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router Node": {
+      "main": [
+        [
+          {
+            "node": "Build MCP - Simple",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Prompt from MCP": {
+      "main": [
+        [
+          {
+            "node": "Run PromptOS-Vote Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run PromptOS-Vote Engine": {
+      "main": [
+        [
+          {
+            "node": "Prep Evaluator Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run PromptOS-Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Merge vote and evaluation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Evaluator Input": {
+      "main": [
+        [
+          {
+            "node": "Run PromptOS-Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge vote and evaluation": {
+      "main": [
+        [
+          {
+            "node": "Rank Responses by Adjusted Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank Responses by Adjusted Score": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HITL Override Form": {
+      "main": [
+        [
+          {
+            "node": "Form Ending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Top Response": {
+      "main": [
+        [
+          {
+            "node": "Set Default Responses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form Ending": {
+      "main": [
+        [
+          {
+            "node": "Resolve HITL Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve HITL Action": {
+      "main": [
+        []
+      ]
+    },
+    "Set Default Responses": {
+      "main": [
+        [
+          {
+            "node": "HITL Override Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build MCP - Structured",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Prepare Final Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Build MCP - Structured - Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Generate Section Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build sections array": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Section Response",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Section Response": {
+      "main": [
+        [
+          {
+            "node": "Prepare Merge Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Merge Input": {
+      "main": [
+        [
+          {
+            "node": "LLM Merge Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM Merge Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Merge Prompt": {
+      "main": [
+        [
+          {
+            "node": "Prepare Vote Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Vote Payload": {
+      "main": [
+        [
+          {
+            "node": "Run PromptOS-Vote Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build MCP - Simple": {
+      "main": [
+        [
+          {
+            "node": "Generate Prompt from MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build MCP - Structured": {
+      "main": [
+        [
+          {
+            "node": "Build sections array",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Build MCP - Structured - Test": {
+      "main": [
+        [
+          {
+            "node": "Build sections array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a63eb67a-8b7f-4d3c-aae0-eda6009b0b3c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "VXnBVFm1w2zsvSt3",
+  "tags": [
+    {
+      "updatedAt": "2025-06-13T00:44:28.800Z",
+      "createdAt": "2025-06-13T00:44:28.800Z",
+      "id": "HMfvMejmdgx6xPHF",
+      "name": "PromptOS"
+    }
+  ]
+}

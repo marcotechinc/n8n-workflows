@@ -1,0 +1,387 @@
+{
+  "name": "ingest_feeds_rss_ml_model_test",
+  "nodes": [
+    {
+      "parameters": {
+        "tableId": "feeds",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.title }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.source }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.content }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.topic }}"
+            },
+            {
+              "fieldId": "tone",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.tone_llm }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.category }}"
+            },
+            {
+              "fieldId": "date",
+              "fieldValue": "={{ $('Flatten LLM Output').item.json.date }}"
+            },
+            {
+              "fieldId": "tone_ml",
+              "fieldValue": "={{ $json.tone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        48
+      ],
+      "id": "19561f12-3fcc-4b6b-a78f-fd61333779c7",
+      "name": "Insert feed into DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        272
+      ],
+      "id": "799d543e-9625-4968-81c9-23db4059c1c8",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"OpenAI launches new agent platform\",\n  \"url\": \"https://techcrunch.com/example\",\n  \"date\": \"2025-10-06\",\n  \"source\": \"TechCrunch\",\n  \"content\": \"OpenAI announced AgentKit, a toolkit to help developers build and deploy AI agents.\",\n  \"topic\": \"AI\",\n  \"tone\": \"positive\",\n  \"category\": \"Product Launch\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        256
+      ],
+      "id": "6053f31f-f8e3-4290-bf92-855a8166694d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following article and append three new fields.\n\nLabel options:\n- topic: [AI, Blockchain, Cybersecurity, Big Tech, Other]\n- tone: [positive, neutral, negative]\n- category: [Product Launch, Funding, Opinion, Market Report, Research, Regulation, Other]\n\nArticle:\nTitle: {{$json[\"title\"]}}\nDate: {{$json[\"date\"]}}\nSource: {{$json[\"source\"]}}\nURL: {{$json[\"url\"]}}\nContent: {{$json[\"content\"] || $json[\"title\"]}}\n\nReturn JSON in this exact structure:\n{\n  \"title\": \"{{$json[\"title\"]}}\",\n  \"date\": \"{{$json[\"date\"]}}\",\n  \"source\": \"{{$json[\"source\"]}}\",\n  \"content\": \"{{$json[\"content\"] || $json[\"title\"]}}\",\n  \"url\": \"{{$json[\"url\"]}}\",\n  \"topic\": \"<one from list>\",\n  \"tone\": \"<one from list>\",\n  \"category\": \"<one from list>\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a structured classification assistant.\nYou receive one article at a time with fields like title, date, source, and content.\nReturn the same article plus three new fields: topic, tone, and category.\nUse only the allowed labels and return valid JSON.\nDo not summarize, explain, or change existing fields."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        656,
+        48
+      ],
+      "id": "930b4ab1-a851-442c-9add-3633c59694d0",
+      "name": "Enrich Signal"
+    },
+    {
+      "parameters": {
+        "url": "https://news.yahoo.com/rss/tech",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        48
+      ],
+      "id": "734b356b-3af0-4d72-891c-318e0e4d2f72",
+      "name": "Yahoo Tech: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        256,
+        48
+      ],
+      "id": "7a988027-61ac-4bfd-943e-7b1243d94280",
+      "name": "Yahoo Tech: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json.rss.channel.item;\n\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    url: entry.link,\n    date: entry.pubDate,\n    source: entry.source?._ || entry.source || \"Yahoo\",\n    content: entry.description || entry[\"content:encoded\"] || \"\", // will be \"\"\n    image: entry[\"media:content\"]?.url || \"\"\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        48
+      ],
+      "id": "d6d539d5-ec78-4dea-9d94-a2252718ef59",
+      "name": "Yahoo Tech: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "257403fe-af97-45ce-815f-baf322aca2b2",
+              "name": "title",
+              "value": "={{ $json.output.title }}",
+              "type": "string"
+            },
+            {
+              "id": "393a07fc-ce00-4fed-a72f-ebd2258f7c4f",
+              "name": "content",
+              "value": "={{ $json.output.content }}",
+              "type": "string"
+            },
+            {
+              "id": "152fbe6a-ea4b-46cf-aca0-4cccee81d167",
+              "name": "tone_llm",
+              "value": "={{ $json.output.tone }}",
+              "type": "string"
+            },
+            {
+              "id": "5adf5bc6-a95b-4615-971c-714adc69e7a5",
+              "name": "topic",
+              "value": "={{ $json.output.topic }}",
+              "type": "string"
+            },
+            {
+              "id": "283cfbf1-d114-40df-8492-b0cf8db38107",
+              "name": "category",
+              "value": "={{ $json.output.category }}",
+              "type": "string"
+            },
+            {
+              "id": "fd5acd7a-93ac-448b-8747-dc8d539f4dc6",
+              "name": "url",
+              "value": "={{ $json.output.url }}",
+              "type": "string"
+            },
+            {
+              "id": "9dd9998e-012e-44d7-97d6-fd3491763aeb",
+              "name": "date",
+              "value": "={{ $json.output.date }}",
+              "type": "string"
+            },
+            {
+              "id": "62f5c7e1-0ec3-4669-b9be-6c3daa5bc5a9",
+              "name": "source",
+              "value": "={{ $json.output.source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1008,
+        48
+      ],
+      "id": "c8d28f62-5321-4c9e-a7a0-36ff67de2d75",
+      "name": "Flatten LLM Output"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mlops-production-591e.up.railway.app/predict",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1264,
+        48
+      ],
+      "id": "a60b3d6d-a613-487d-b927-2f467ac2a9da",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        48
+      ],
+      "id": "69c7effb-7bb5-4e14-a6d3-3b97e6604ec5",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Signal": {
+      "main": [
+        [
+          {
+            "node": "Flatten LLM Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yahoo Tech: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "Yahoo Tech: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yahoo Tech: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "Yahoo Tech: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yahoo Tech: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten LLM Output": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Insert feed into DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Yahoo Tech: Fetch RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9b9a06eb-99de-499a-8b35-17d1166d4d93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "XFBm5zE3q48jvdo8",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}

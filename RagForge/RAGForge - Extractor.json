@@ -1,0 +1,423 @@
+{
+  "name": "RAGForge - Extractor",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        560,
+        32
+      ],
+      "id": "9384a198-69b4-4ea4-ad91-11695b536aaa",
+      "name": "Loop - Files"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the extracted text and available metadata from a PDF.\n\nUse both the text and metadata (if present) to determine the document type, author, and date. Then structure the content into clean JSON using the format provided in the system prompt.\n\nIf metadata is missing or incomplete, try to infer values from the text. If not possible, return null for that field.\n\nTEXT:\n{{ $json.text }}\n\nMETADATA (may be partial or empty):\n{{ $json.info }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a document structuring assistant.\n\nYour job is to take raw PDF text and metadata and convert it into clean JSON. Preserve all original content as closely as possible — do not summarize, rewrite, or infer meaning beyond structure.\n\nInstructions:\n\n1. Detect the document type using both the text and metadata.\n2. Extract author and date from metadata. If missing, try to infer from the text. If still missing, set to null.\n3. Segment the text into clean sections using titles, headers, or numbered patterns.\n4. If a section includes rows or patterns that resemble tables (e.g., version logs, resource tables), structure it as a `tables` array.\n5. Keep all non-tabular text in the `content` field — never leave content empty unless the section was truly blank.\n6. Strip out comments or editor artifacts (e.g., \"Commented [MS1]\").\n7. Do not hallucinate or create content. Do not summarize or enhance phrasing.\n8. Ensure all strings are trimmed, compact, and free of redundant whitespace.\n\nFormat:\n{\n  \"document_type\": \"string\",\n  \"document_date\": \"string or null\",\n  \"document_author\": \"string or null\",\n  \"document_sections\": [\n    {\n      \"title\": \"string\",\n      \"content\": \"string\",\n      \"tables\": [ optional if present ]\n    }\n  ]\n}\n\nDo not output Markdown or explanations. Only return clean JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1360,
+        64
+      ],
+      "id": "083c1b1e-c9ae-43f7-82c8-5a26c4181b67",
+      "name": "Review Extract"
+    },
+    {
+      "parameters": {
+        "content": "## TODO\n- How to deal with images or links? (other?)"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "a75a4fbc-4e1d-4b07-8592-825b9c5cde93",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json[\"text\"];\n\ntry {\n  const parsed = JSON.parse(raw);\n  return [{ json: parsed }];\n} catch (err) {\n  return [{\n    json: {\n      error: \"Invalid JSON output from LLM\",\n      raw: raw,\n      message: err.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        80
+      ],
+      "id": "22190fba-6941-406f-87ec-f54b5048f633",
+      "name": "Output Cleaner"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rfcmhcxcfnlbfgmlcabi.supabase.co/rest/v1/documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "document_type",
+              "value": "={{ $json.document_type }}"
+            },
+            {
+              "name": "document_date",
+              "value": "={{ $json.document_date }}"
+            },
+            {
+              "name": "document_author",
+              "value": "={{ $json.document_author }}"
+            },
+            {
+              "name": "raw_json",
+              "value": "={{ JSON.stringify($json) }}"
+            },
+            {
+              "name": "embedded",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1904,
+        240
+      ],
+      "id": "6e48eb30-8fab-41c4-a923-b5786a876ac7",
+      "name": "Insert to Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LDhBmd2aeXNRoFRh",
+          "name": "Supabase - PromptOS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $json.text;\nconst filename = $json.info?.name || '';\n\nlet cleanedText = rawText;\n\n// Optional file-specific logic\nif (filename.includes('Enterprise Monitoring')) {\n  cleanedText = cleanedText.replace(/Enterprise Monitoring\\s*–\\s*Discovery.*?Business Case\\s*/gi, '');\n}\n\n// Universal cleanup\ncleanedText = cleanedText\n  .replace(/Commented\\s+\\[.*?\\]:.*$/gim, '')\n  .replace(/\\n{2,}/g, '\\n')\n  .replace(/[ \\t]+$/gm, '');\n\nreturn {\n  text: cleanedText.trim(),\n  info: $json.info || null,\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        64
+      ],
+      "id": "a05fa42a-c8da-4d74-8e92-2b3aa2e9cea1",
+      "name": "Pre-Cleaning"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        240
+      ],
+      "id": "f92bcac3-774c-48e4-b517-e1c2faa0bf8a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-opus-20240229",
+          "mode": "list",
+          "cachedResultName": "Claude Opus 3"
+        },
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1504,
+        240
+      ],
+      "id": "712945bb-911b-4934-ac9e-fe67a77b95b8",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "Wmz3AO5pPNbuodMG",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        80,
+        32
+      ],
+      "id": "77a24634-2271-4722-89c3-bf37918de674",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rfcmhcxcfnlbfgmlcabi.supabase.co/storage/v1/object/list/documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prefix"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        32
+      ],
+      "id": "40be69d4-c675-49ad-a4bf-670fd4ec0e82",
+      "name": "Query Supabase Storage",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "LDhBmd2aeXNRoFRh",
+          "name": "Supabase - PromptOS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://rfcmhcxcfnlbfgmlcabi.supabase.co/storage/v1/object/documents/{{ $json.name }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        144
+      ],
+      "id": "25b61a55-1202-4747-a808-3c96f289c279",
+      "name": "Download",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LDhBmd2aeXNRoFRh",
+          "name": "Supabase - PromptOS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        144
+      ],
+      "id": "7008911d-5f73-4eca-a752-e71720fccc9d",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "content": "## TODO\n- Need OCR; can't read image"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1120,
+        -160
+      ],
+      "typeVersion": 1,
+      "id": "97d81ab8-0e8a-4868-9c96-7b6a8e3e08cb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## TODO\n- Remove status reports for now"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        240,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "eee0b61e-8799-40fc-9d54-2f4b12acd077",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Loop - Files": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Extract": {
+      "main": [
+        [
+          {
+            "node": "Output Cleaner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Cleaner": {
+      "main": [
+        [
+          {
+            "node": "Insert to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-Cleaning": {
+      "main": [
+        [
+          {
+            "node": "Review Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Review Extract",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase Storage": {
+      "main": [
+        [
+          {
+            "node": "Loop - Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Pre-Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2a5ed923-eeac-4c18-8717-eaf0e9cb0117",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "EyMxJsW5hS700vGa",
+  "tags": [
+    {
+      "updatedAt": "2025-06-13T00:44:28.800Z",
+      "createdAt": "2025-06-13T00:44:28.800Z",
+      "id": "HMfvMejmdgx6xPHF",
+      "name": "PromptOS"
+    }
+  ]
+}

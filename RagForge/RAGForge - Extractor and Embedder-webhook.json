@@ -1,0 +1,560 @@
+{
+  "name": "RAGForge - Extractor and Embedder-webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload PDF to \"RAG\"",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "document_details",
+              "fieldType": "textarea",
+              "placeholder": "Describe the document, it's meaning and purpose",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "upload_pdf",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        -368
+      ],
+      "id": "d8d133b6-2e37-4d74-8408-c2540838e30f",
+      "name": "On form submission",
+      "webhookId": "ebcfe3c7-b236-4a19-af2d-03ac6daab375",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "### Extract sub workflow",
+        "height": 620,
+        "width": 740,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        272,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "f14accfb-2f32-47d9-89c4-0ad047e63478",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "### Embedder sub workflow",
+        "height": 620,
+        "width": 680,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2144,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "2cacc20a-bbe1-4e05-a15e-0a092409718a",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "content": "### Content reviewer / preparer",
+        "height": 620,
+        "width": 980,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1104,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "d91aeb0c-35fe-4d45-85a4-aeb9afa75cd6",
+      "name": "Sticky Note20"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "upload_pdf",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -336
+      ],
+      "id": "9157e903-4e25-49b5-a261-bca5549f1e23",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json;\nconst structured = items[1].json;\n\nreturn [{\n  json: {\n    text: raw.text,\n    document_details: structured.document_details,\n    upload_pdf: structured.upload_pdf,\n    submitted_at: structured.submittedAt || new Date().toISOString()\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        -336
+      ],
+      "id": "5d15ff30-b8e6-4a7b-afcf-ee7083496add",
+      "name": "Pre-Cleaning"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        -128
+      ],
+      "id": "41c09af8-4c51-41d7-bb11-8f33e330a1e1",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        -224
+      ],
+      "id": "a8cc13f4-7fdd-435c-8339-6bdf883c4ae5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"content\": \"Document Type: Project Charter | Document Date: Mar 7, 2025 | Document Author: Marco San Juan\"\n  },\n  {\n    \"content\": \"Problem Statement | Equinox Gold lacks centralized enterprise monitoring capability, resulting in fragmented oversight of technology assets—any system or device that transmits or receives information. Monitoring is currently decentralized across teams and service providers, using siloed tools with limited visibility and coordination. This leads to inefficiencies such as missed or delayed responses, false positives, and no data correlation, increasing operational and security risks.\"\n  },\n  {\n    \"content\": \"Solution Overview | Equinox Gold will establish a centralized enterprise monitoring capability to enhance visibility, coordination, and decision-making across all technology assets. This initiative will create a standardized, scalable approach that improves monitoring effectiveness while aligning with existing operations. The implementation approach will be determined through Discovery and Design, ensuring flexibility based on findings.\"\n  },\n  {\n    \"content\": \"Project Role: IT Architect | Resource Name: Greg Kornatowsky\"\n  },\n  {\n    \"content\": \"Stakeholder: VP | Role & Involvement: Approve key decisions, ensure resource availability, support decision-making | Who: Miller Dussan\"\n  }\n]"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1744,
+        -144
+      ],
+      "id": "d84bea31-a130-4154-8cd4-7d1b75c9f632",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "document_vectors",
+          "mode": "list",
+          "cachedResultName": "document_vectors"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        -336
+      ],
+      "id": "1bce0476-f4c3-4bb0-b6de-b624bf42eec3",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LDhBmd2aeXNRoFRh",
+          "name": "Supabase - PromptOS"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "batchSize": 200,
+          "stripNewLines": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2208,
+        -96
+      ],
+      "id": "528eb919-4dbb-42ca-b158-1a1d54faf70c",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        -128
+      ],
+      "id": "e9d6f371-3bb5-4df0-bed6-2f76d04ef559",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        48
+      ],
+      "id": "1f2d0cbd-efbe-4054-99b7-78313fdd205e",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is structured document content previously cleaned and segmented.\n\nSTRUCTURED CONTENT:\n{{ $json.text }}\n\nPlease analyze and plan the final chunk boundaries for vector embedding. Each output chunk should be semantically meaningful and fit within token limits.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a semantic chunking assistant.\n\nYour role is to analyze pre-structured content and generate final chunks for embedding in a vector database.\n\nInstructions:\n\n1. You will receive a list of structured content blocks representing sections or subsections from a document.\n2. Your job is to group, merge, or split these into final chunks that are:\n   - Semantically coherent\n   - Each under ~500 tokens (~2000 characters) unless content integrity requires more\n   - Suitable for embedding and retrieval\n3. Avoid splitting mid-sentence or between logically connected paragraphs.\n4. Do not paraphrase, summarize, or hallucinate — preserve original text.\n5. Maintain the original ordering of content unless there's a strong semantic reason to reorder (rare).\n6. Treat tabular text or list-like entries as atomic when possible.\n\n✅ RETURN FORMAT:\nReturn raw JSON with a top-level array called `output`, consisting only of objects with a single `content` field.\n\nExample:\n[\n  {\n    \"output\": [\n      { \"content\": \"string\" },\n      { \"content\": \"string\" }\n    ]\n  }\n]\n\nNotes:\n- This output will be directly embedded; each `content` block should be optimized for standalone utility in retrieval contexts.\n- No Markdown, no comments, no code fences — just raw JSON."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1568,
+        -336
+      ],
+      "id": "90e9e7d7-f23d-468b-83c3-d829daf0a5eb",
+      "name": "chunk_planner"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the raw PDF content and associated context. Use both the extracted text and any metadata to structure and flatten the document.\n\nTEXT:\n{{ $json.text }}\n\nCONTEXT / METADATA (may be empty or partial):\n{{ $json.document_details || 'null' }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a document structuring and flattening assistant.\nYour job is to analyze raw PDF content and produce clean, structured JSON ready for downstream chunking and embedding into a vector database.\n\nInstructions:\n\n1. Use the text and any provided metadata to determine high-level context.\n2. Segment the text into meaningful sections and subsections using clear headers, numbered patterns, or layout hints.\n3. Detect tabular data within sections and extract it as a structured tables array before transforming.\n   - Preserve row and column boundaries.\n   - Transform tables into readable semantic units without losing cell granularity.\n4. For each section and subsection, transform the title, content, and tables into coherent semantic units:\n   - Each unit should be self-contained and conceptually distinct.\n   - Preserve exact original language with no summarizing, paraphrasing, or hallucinating.\n5. Maintain distinct boundaries between subsections — do not merge unrelated content into a single unit.\n6. Clean all text by:\n   - Stripping dotted leader lines (e.g., \"Section Name ............ 3\").\n   - Removing layout artifacts or scan noise (e.g., DocuSign IDs, headers/footers, page numbers).\n   - Ignoring or flattening repeated Table of Contents lines unless they add semantic value.\n\nThis output will be passed to a downstream LLM or process for final chunk planning and token-based slicing.\n\n✅ RETURN FORMAT:  \nReturn raw JSON with a top-level array called `output`, consisting only of objects with a single `content` field.\n\nExample:  \n[\n  {\n    \"output\": [\n      { \"content\": \"string\" },\n      { \"content\": \"string\" }\n    ]\n  }\n]\n\nNotes:  \n- `output` must be a flattened list of all semantic units representing the full document.\n- Do not include `document_type`, `document_date`, `document_author`, or any metadata.\n- Output only raw JSON — no Markdown, no code fences."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1168,
+        -336
+      ],
+      "id": "ade51744-69c5-4dc3-a572-948aa1c6a4e1",
+      "name": "content_cleaner"
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_CHARS = 2000; // Approx ~500 tokens\nconst chunks = [];\n\n($json.output || []).forEach(item => {\n  const content = item.content?.trim();\n  if (!content) return;\n\n  if (content.length <= MAX_CHARS) {\n    chunks.push({ json: { content } });\n  } else {\n    let start = 0;\n    while (start < content.length) {\n      const chunk = content.slice(start, start + MAX_CHARS);\n      chunks.push({ json: { content: chunk } });\n      start += MAX_CHARS;\n    }\n  }\n});\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        -336
+      ],
+      "id": "1970578a-7517-4422-bd57-763a68642ee0",
+      "name": "token_guard"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5f76d709-679e-4737-a383-51c2495ace82",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -80
+      ],
+      "id": "ca173e79-6c68-4084-9747-09d0fbdb1f7c",
+      "name": "Webhook",
+      "webhookId": "5f76d709-679e-4737-a383-51c2495ace82"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "09974d03-02dd-4f3b-b764-efd1c4913c00",
+              "name": "document_details",
+              "value": "={{ $json.body.document_details || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "d4f0c8e2-f260-4634-af40-99ad314a2591",
+              "name": "file_url",
+              "value": "={{ $json.body.file_url || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -208
+      ],
+      "id": "fa28fb46-51cd-4b65-a0fc-a1be4b21bc1c",
+      "name": "Set data"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.file_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "upload_pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        -336
+      ],
+      "id": "ceb530c7-6fc6-42de-8ba0-7244014bff12",
+      "name": "Download file from Supabase"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        []
+      ]
+    },
+    "Pre-Cleaning": {
+      "main": [
+        [
+          {
+            "node": "content_cleaner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "content_cleaner",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "chunk_planner",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Pre-Cleaning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "chunk_planner",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "content_cleaner": {
+      "main": [
+        [
+          {
+            "node": "chunk_planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chunk_planner": {
+      "main": [
+        [
+          {
+            "node": "token_guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "token_guard": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Download file from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1fb9c152-1520-4478-b2a9-f1913c02425d",
+  "meta": {
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "MRvfR4KPMKgYvruE",
+  "tags": [
+    {
+      "updatedAt": "2025-06-13T00:44:28.800Z",
+      "createdAt": "2025-06-13T00:44:28.800Z",
+      "id": "HMfvMejmdgx6xPHF",
+      "name": "PromptOS"
+    }
+  ]
+}
