@@ -1,0 +1,282 @@
+{
+  "name": "RAGForge-Chat",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        -32
+      ],
+      "id": "b59e645c-44f6-4e62-b4e8-483f3ee47968",
+      "name": "When chat message received",
+      "webhookId": "5284de2a-5044-4c6e-8dca-97733fd3eb98"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are a project assistant. Use the provided context from the project_information_retriever vector store to inform your response.\n\nAlways first call the metadata extractor tool to parse filters (author, title, year, category, document_type) from the user query. Then call the retriever tool with those filters to fetch relevant documents. Use the results to answer.\n\nKeep answers short and easy to scan. If the answer is genuinely unknown, reply: \"Not sure based on the current information.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        272,
+        64
+      ],
+      "id": "219daf46-16d8-4bdb-bf17-3ff7e2cb7831",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        272
+      ],
+      "id": "3661b763-7b41-44de-8816-b7ad48ea3c97",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "7N2JumWalFlmmkgo",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        240
+      ],
+      "id": "1ef05328-be7d-4cdb-9eb3-e1c1cbe06af0",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {
+          "stripNewLines": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        512
+      ],
+      "id": "f21b3a95-6084-43a6-b747-b50c1cbd4c6e",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "7N2JumWalFlmmkgo",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        864,
+        496
+      ],
+      "id": "fbdfd081-51c9-4cf3-a73d-e64096e28805",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "FncKA8N1LKVtXp8Q",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Tool for extracting structured metadata filters (author, document_id, title, date) from a user’s query.",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a metadata filter extractor.\n\nGiven a natural language query, output only a JSON object with this structure:\n\n{\n  \"filters\": {\n    \"author\": \"...\",\n    \"title\": \"...\",\n    \"year\": \"...\",\n    \"category\": \"...\",\n    \"document_type\": \"...\"\n  }\n}\n\nRules:\n- Do not wrap in \"response\" or \"output\".\n- Return only valid JSON, no extra text or code fences.\n- Use only the keys above: author, title, year, category, document_type.\n- If the query explicitly names a value, map it directly.\n- If the query implies a value, infer it into the most relevant key.\n  (e.g. \"find charters from 2024\" → document_type = \"Project Charter\", year = \"2024\")\n- If no relevant value can be extracted or inferred, omit that key.\n- Preserve text exactly as given in the user query.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        400
+      ],
+      "id": "b41c92ba-b166-45b8-a963-4d0df7f616c7",
+      "name": "Metadata extractor"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "project_information_retriever",
+        "toolDescription": "Retrieve information about projects from project documentation",
+        "tableName": {
+          "__rl": true,
+          "value": "document_vectors",
+          "mode": "list",
+          "cachedResultName": "document_vectors"
+        },
+        "topK": 10,
+        "useReranker": true,
+        "options": {
+          "queryName": "match_documents_flex",
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "author",
+                "value": "={{ $json.filters.author }}"
+              },
+              {
+                "name": "document_type",
+                "value": "={{ $json.filters.document_type }}"
+              },
+              {
+                "name": "year",
+                "value": "={{ $json.filters.year }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.filters.category }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        336
+      ],
+      "id": "622299e8-5d4f-489f-ba84-dd1d50c16cb7",
+      "name": "Retrieve Documents",
+      "credentials": {
+        "supabaseApi": {
+          "id": "NbWVECcHyMlwzJ9m",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Metadata extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Retrieve Documents",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Retrieve Documents",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metadata extractor": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve Documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1cfd9f3a-5cf7-420a-88d3-e5398d59c2fa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "YhMtWu8L3JqHS2gH",
+  "tags": [
+    {
+      "createdAt": "2025-09-02T02:20:44.159Z",
+      "updatedAt": "2025-09-02T02:20:44.159Z",
+      "id": "xnx8OiAgoQy5l51m",
+      "name": "RAGForge"
+    }
+  ]
+}

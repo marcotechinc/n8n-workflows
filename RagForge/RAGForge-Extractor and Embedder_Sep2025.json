@@ -1,0 +1,959 @@
+{
+  "name": "RAGForge-Extractor and Embedder",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload PDF to \"RAG\"",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "title",
+              "placeholder": "Short name of the doc",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "document_type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Business Case"
+                  },
+                  {
+                    "option": "Project Charter"
+                  },
+                  {
+                    "option": "Religious"
+                  },
+                  {
+                    "option": "Agile"
+                  },
+                  {
+                    "option": "Operations Guide"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "author",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Manus"
+                  },
+                  {
+                    "option": "EQX"
+                  },
+                  {
+                    "option": "Hyperlight"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "year",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "2025"
+                  },
+                  {
+                    "option": "2024"
+                  },
+                  {
+                    "option": "2023"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "category",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Faith"
+                  },
+                  {
+                    "option": "Tech"
+                  },
+                  {
+                    "option": "Strategy"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "upload_pdf",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -2608,
+        32
+      ],
+      "id": "97ec4e76-6744-4606-a877-70ec25c9b930",
+      "name": "On form submission",
+      "webhookId": "186195ae-0096-4bc4-a7e3-e88f8292747c"
+    },
+    {
+      "parameters": {
+        "content": "User to upload PDF and provide context",
+        "height": 100,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3088,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "88198a0b-c801-48b0-afb1-699e1dc42925",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "LLM -> Review Extracted data and context",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1920,
+        -864
+      ],
+      "typeVersion": 1,
+      "id": "a3d5a2fb-e840-4e4b-96b6-a515f0e76ec0",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "OCR layer later on for fallback",
+        "height": 100,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2752,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "1b733bab-9335-4063-9b2d-23bdd6c811b1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Merge -> Extracted data and context",
+        "height": 100,
+        "width": 210,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2528,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "46bea70d-070b-4d1d-9ba1-3c3bf7296192",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Clean Extracted Data",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2256,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "1e6c59f7-aa98-4c0d-8007-c2159c2e2df8",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Clean output",
+        "height": 100,
+        "width": 150,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1712,
+        -864
+      ],
+      "typeVersion": 1,
+      "id": "42ca1047-31b0-4333-8de4-178957275c48",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "Extract File",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2752,
+        -864
+      ],
+      "typeVersion": 1,
+      "id": "ddee038b-56c4-4865-86f0-6b7e21d95271",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "HITL loop if LLM is unsure",
+        "height": 100,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1920,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "ace06e8a-014f-4e66-8349-be37f39c3611",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "### Extract sub workflow",
+        "height": 80,
+        "width": 740,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2752,
+        -992
+      ],
+      "typeVersion": 1,
+      "id": "770e2e44-67e1-4896-951d-18788a28d834",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "Upload to Supabase Storage",
+        "height": 100,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1488,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "2f8a9796-dce6-466f-95ec-ac0e06ee400a",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2752,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "6bab2f81-5e58-4e66-9f68-76fa22339eb4",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2256,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "967f4fbe-710f-46e6-9675-72dd11fcd1a0",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1920,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "aedc5167-f8f0-4995-b614-cbc6b3ccc50c",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1488,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "619d3200-9286-461c-9f6e-55b2b3b5812b",
+      "name": "Sticky Note15"
+    },
+    {
+      "parameters": {
+        "content": "Insert to Supabase DB",
+        "height": 100,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1280,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "676d3b91-5159-45f9-87bf-71cc1a0e0b7b",
+      "name": "Sticky Note16"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1280,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "7c72449b-e071-42dd-a907-d7d26a4cce94",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {
+        "content": "### Embedder sub workflow",
+        "height": 80,
+        "width": 260,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        -992
+      ],
+      "typeVersion": 1,
+      "id": "195b9058-6d01-4d3a-b9f8-8f1c4d89fd64",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "content": "Job status",
+        "height": 80,
+        "width": 160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "fe3fe1d4-0c40-480c-803c-a2d2cd356f8a",
+      "name": "Sticky Note19"
+    },
+    {
+      "parameters": {
+        "content": "### Content reviewer / preparer",
+        "height": 80,
+        "width": 920,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1920,
+        -992
+      ],
+      "typeVersion": 1,
+      "id": "4dcd0f4b-e650-47c2-8243-7ed0ba006839",
+      "name": "Sticky Note20"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "upload_pdf",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        -144
+      ],
+      "id": "11a322bd-ea19-4c23-abc5-ad32bdcb99d6",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-opus-20240229",
+          "mode": "list",
+          "cachedResultName": "Claude Opus 3"
+        },
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -1840,
+        208
+      ],
+      "id": "890d0d89-ac49-4262-9d64-1c41a2ce0778",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "tFbMecmRSsuls3Tg",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "document_vectors",
+          "mode": "list",
+          "cachedResultName": "document_vectors"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        208
+      ],
+      "id": "d21b78a0-96a5-446d-a47a-35d3ef2a7940",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "NbWVECcHyMlwzJ9m",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "batchSize": 200,
+          "stripNewLines": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -992,
+        416
+      ],
+      "id": "972c17aa-6e68-4df6-97b1-dc7aedc9b392",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "7N2JumWalFlmmkgo",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "title",
+                "value": "={{ $json.metadata.title }}"
+              },
+              {
+                "name": "author",
+                "value": "={{ $json.metadata.author }}"
+              },
+              {
+                "name": "year",
+                "value": "={{ $json.metadata.year }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.metadata.category }}"
+              },
+              {
+                "name": "document_type",
+                "value": "={{ $json.metadata.document_type }}"
+              },
+              {
+                "name": "file",
+                "value": "={{ $json.metadata.file }}"
+              },
+              {
+                "name": "doc_id",
+                "value": "={{ $json.document_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        -832,
+        384
+      ],
+      "id": "6b09c160-aa54-4a25-92e6-f6d4c6234f3b",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        544
+      ],
+      "id": "ff60c934-4882-44e7-ab01-adf24a38c8ae",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "content": "Embedding process",
+        "height": 100,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "7445c5fc-b8c2-42f4-b8c5-0032d131c82c",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "Understand use of metadata",
+        "height": 80,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "77bbe865-4174-474a-a27c-82ce4260a400",
+      "name": "Sticky Note21"
+    },
+    {
+      "parameters": {
+        "content": "Consider making use of metadata",
+        "height": 80,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1488,
+        -464
+      ],
+      "typeVersion": 1,
+      "id": "80522831-f5be-49cf-ba99-88a35dd6192f",
+      "name": "Sticky Note22"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is a cleaned segment of PDF text extracted from the file.  \nClean, structure, and flatten it into semantic units for downstream chunking.\n\nTEXT:\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a document structuring and flattening assistant.\nYour job is to analyze cleaned PDF text segments and produce structured JSON ready for downstream chunking and embedding.\n\nInstructions:\n\n1. Segment the text into meaningful sections and subsections using clear headers, numbered patterns, or layout hints.\n2. Detect tabular data within sections and extract it as a structured tables array before transforming.\n   - Preserve row and column boundaries.\n   - Transform tables into readable semantic units without losing cell granularity.\n3. For each section and subsection, transform the title, content, and tables into coherent semantic units:\n   - Each unit should be self-contained and conceptually distinct.\n   - Preserve exact original language with no summarizing, paraphrasing, or hallucinating.\n4. Maintain distinct boundaries between subsections — do not merge unrelated content into a single unit.\n5. Clean text by:\n   - Stripping dotted leader lines (e.g., \"Section Name ............ 3\").\n   - Removing layout artifacts or scan noise (e.g., headers/footers, page numbers).\n   - Ignoring repeated Table of Contents lines unless they add semantic value.\n6. Do not include metadata here. Only process text.\n\n✅ RETURN FORMAT:\n{\n  \"output\": [\n    {\n      \"content\": \"string\"\n    }\n  ]\n}\n\nNotes:\n- Every object must include only a `content` field.\n- Do not add metadata.\n- Output only raw JSON — no Markdown, no code fences, no stringification.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1920,
+        -144
+      ],
+      "id": "226ec381-1ef4-4834-bbb4-2388a303a216",
+      "name": "output_prep"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Form input:\nTitle: {{ $json[\"title\"] }}\nAuthor / Owner: {{ $json[\"author\"] }}\nYear: {{ $json[\"year\"] }}\nCategory: {{ $json[\"category\"] }}\nDocument Type: {{ $json[\"document_type\"] }}\nFile: {{ $json[\"upload_pdf\"][\"filename\"] }}\nSubmitted At: {{ $json[\"submittedAt\"] }}\n\nConvert this into a normalized metadata object according to the required schema.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a metadata preparation assistant.\nYour job is to map form input fields into the required metadata schema.\n\n✅ REQUIRED OUTPUT:\n{\n  \"metadata\": {\n    \"title\": \"string\",\n    \"author\": \"string\",\n    \"year\": \"string\",\n    \"category\": \"string\",\n    \"document_type\": \"string\",\n    \"file\": \"string\",\n    \"submitted_at\": \"string\"\n  }\n}\n\nRules:\n- Map fields directly from form input.\n- All fields must always exist, always strings (use \"\" if missing).\n- Output only raw JSON, no Markdown, no code fences."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -1872,
+        368
+      ],
+      "id": "4701d83f-42fd-4693-b523-c8855bdea4f5",
+      "name": "metadata_prep"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"metadata\": {\n    \"title\": \"string\",\n    \"author\": \"string\",\n    \"year\": \"string\",\n    \"category\": \"string\",\n    \"document_type\": \"string\",\n    \"file\": \"string\",\n    \"submitted_at\": \"string\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1760,
+        560
+      ],
+      "id": "c46c0f23-1122-4298-88ba-94db05baa9c0",
+      "name": "Metadata output parser"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"output\": [\n    {\n      \"content\": \"string\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1744,
+        96
+      ],
+      "id": "3d601aec-220e-4a81-b5c2-26b279c7194c",
+      "name": "Content output parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const contentItems = $items(\"output_prep\").flatMap(i => i.json.output || []);\nconst metadataItems = $items(\"metadata_prep\").map(i => i.json.output.metadata || {});\nconst metadata = metadataItems[0] || {};\n\nreturn contentItems.map(c => ({\n  json: {\n    content: c.content,\n    metadata\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        208
+      ],
+      "id": "37cfcdf3-15ba-494b-bc1a-e3a908d0adf5",
+      "name": "Merge output and metadata"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1520,
+        208
+      ],
+      "id": "0eedd9b2-75fc-4488-8373-8985858abe60",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -2080,
+        144
+      ],
+      "id": "6e5549e0-91ab-4781-808d-f36793ee4536",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "7N2JumWalFlmmkgo",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Config\nconst CHUNK_SIZE = 3500;   // target chunk size in characters\nconst OVERLAP = 350;       // overlap in characters\nconst HARD_MAX = 4200;     // max cap per chunk\n\nfunction uuidv4() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);\n    return v.toString(16);\n  });\n}\n\nfunction estTokens(str) {\n  return Math.ceil(str.length / 4);\n}\n\nlet out = [];\n\nfor (const item of items) {\n  const j = item.json || {};\n  const text = String(j.content || \"\").trim();\n  const meta = { ...(j.metadata || {}) };\n\n  if (!text) continue;\n\n  // Stable doc id\n  if (!meta.doc_id) meta.doc_id = uuidv4();\n\n  let start = 0;\n  let chunkIndex = 0;\n\n  while (start < text.length) {\n    const end = Math.min(start + CHUNK_SIZE, text.length);\n    let slice = text.slice(start, end);\n\n    // Enforce hard cap\n    if (slice.length > HARD_MAX) {\n      slice = slice.slice(0, HARD_MAX);\n    }\n\n    const charStart = start;\n    const charEnd = charStart + slice.length;\n\n    const chunkMeta = {\n      ...meta,\n      chunk_index: chunkIndex,\n      chunk_id: `${meta.doc_id}#${chunkIndex}`,\n      char_start: charStart,\n      char_end: charEnd,\n      token_estimate: estTokens(slice),\n      overlap_chars: OVERLAP\n    };\n\n    out.push({\n      json: {\n        content: slice,\n        metadata: chunkMeta,\n        document_id: meta.doc_id,\n        chunk_index: chunkIndex,\n        chunk_id: `${meta.doc_id}#${chunkIndex}`\n      }\n    });\n\n    // Advance pointer safely\n    if (end >= text.length) break;\n    start = end - Math.min(OVERLAP, CHUNK_SIZE - 1);\n    chunkIndex++;\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        16
+      ],
+      "id": "494daaea-5705-448e-a255-f0edcfd660f2",
+      "name": "Prechunker"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: JSON from Extract PDF node\n// Output: Array of cleaned chunks under `items`\n\nconst CHUNK_SIZE = 2000;  \n\nfunction cleanText(text) {\n  return text\n    .replace(/•/g, \"-\")           // replace bullets\n    .replace(/\\s{2,}/g, \" \")      // collapse extra spaces\n    .replace(/\\n{2,}/g, \"\\n\\n\")   // normalize line breaks\n    .trim();\n}\n\nfunction chunkText(text, size) {\n  const chunks = [];\n  let i = 0;\n  while (i < text.length) {\n    chunks.push(text.slice(i, i + size));\n    i += size;\n  }\n  return chunks;\n}\n\nconst rawText = $json[\"text\"] || \"\";\nconst cleaned = cleanText(rawText);\nlet chunks = cleaned ? chunkText(cleaned, CHUNK_SIZE) : [];\n\n// Safeguard: if no text/chunks, emit a fallback item\nif (chunks.length === 0) {\n  chunks = [\"[NO TEXT EXTRACTED]\"];\n}\n\n// Emit chunks as array of items\nreturn chunks.map(c => ({ text: c }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2128,
+        -144
+      ],
+      "id": "4d7f5b1c-840a-4b54-baec-5f7abc245d25",
+      "name": "Pre-clean"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "metadata_prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Pre-clean",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metadata output parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "metadata_prep",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content output parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "output_prep",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "output_prep": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "metadata_prep": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge output and metadata": {
+      "main": [
+        [
+          {
+            "node": "Prechunker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge output and metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "metadata_prep",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "output_prep",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prechunker": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Pre-clean": {
+      "main": [
+        [
+          {
+            "node": "output_prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ca9c7b4-cb8d-4271-8943-372d45c73fa0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "9pwPwfEHze53vXML",
+  "tags": [
+    {
+      "createdAt": "2025-09-02T02:20:44.159Z",
+      "updatedAt": "2025-09-02T02:20:44.159Z",
+      "id": "xnx8OiAgoQy5l51m",
+      "name": "RAGForge"
+    }
+  ]
+}
