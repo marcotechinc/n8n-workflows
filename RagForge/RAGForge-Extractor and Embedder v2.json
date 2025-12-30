@@ -1,0 +1,612 @@
+{
+  "name": "RAGForge-Extractor and Embedder v2",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload PDF to \"RAG\"",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "title",
+              "placeholder": "Short name of the doc",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "document_type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Business Case"
+                  },
+                  {
+                    "option": "Project Charter"
+                  },
+                  {
+                    "option": "Religious"
+                  },
+                  {
+                    "option": "Agile"
+                  },
+                  {
+                    "option": "Operations Guide"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "author",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Manus"
+                  },
+                  {
+                    "option": "EQX"
+                  },
+                  {
+                    "option": "Hyperlight"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "year",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "2025"
+                  },
+                  {
+                    "option": "2024"
+                  },
+                  {
+                    "option": "2023"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "category",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Faith"
+                  },
+                  {
+                    "option": "Tech"
+                  },
+                  {
+                    "option": "Strategy"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "upload_pdf",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        240
+      ],
+      "id": "4bdd76d8-9146-466d-8105-84287a38c97f",
+      "name": "On form submission",
+      "webhookId": "186195ae-0096-4bc4-a7e3-e88f8292747c"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "upload_pdf",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        320,
+        496
+      ],
+      "id": "71c150da-c864-4f6c-b4c5-ebe47b069054",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-opus-20240229",
+          "mode": "list",
+          "cachedResultName": "Claude Opus 3"
+        },
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        848
+      ],
+      "id": "bd5d090e-ffbf-4a21-beef-de10ae19648b",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "Wmz3AO5pPNbuodMG",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "ragforge_document_vectors",
+          "mode": "list",
+          "cachedResultName": "ragforge_document_vectors"
+        },
+        "options": {
+          "queryName": "ragforge_match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        416
+      ],
+      "id": "15b6b4c7-5ff7-40c6-a019-da417c42b72f",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "batchSize": 200,
+          "stripNewLines": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        624
+      ],
+      "id": "3598b017-35c1-4e88-81ea-7c98fe5a49c9",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "title",
+                "value": "={{ $json.metadata.title }}"
+              },
+              {
+                "name": "author",
+                "value": "={{ $json.metadata.author }}"
+              },
+              {
+                "name": "year",
+                "value": "={{ $json.metadata.year }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.metadata.category }}"
+              },
+              {
+                "name": "document_type",
+                "value": "={{ $json.metadata.document_type }}"
+              },
+              {
+                "name": "file",
+                "value": "={{ $json.metadata.file }}"
+              },
+              {
+                "name": "submitted_at",
+                "value": "={{ $('Prechunker').item.json.metadata.submitted_at }}"
+              },
+              {
+                "name": "doc_id",
+                "value": "={{ $('Prechunker').item.json.metadata.doc_id }}"
+              },
+              {
+                "name": "section_index",
+                "value": "={{ $('Prechunker').item.json.metadata.section_index }}"
+              },
+              {
+                "name": "chunk_index",
+                "value": "={{ $('Prechunker').item.json.metadata.chunk_index }}"
+              },
+              {
+                "name": "chunk_id",
+                "value": "={{ $('Prechunker').item.json.metadata.chunk_id }}"
+              },
+              {
+                "name": "char_start",
+                "value": "={{ $('Prechunker').item.json.metadata.char_start }}"
+              },
+              {
+                "name": "char_end",
+                "value": "={{ $('Prechunker').item.json.metadata.char_end }}"
+              },
+              {
+                "name": "token_estimate",
+                "value": "={{ $('Prechunker').item.json.metadata.token_estimate }}"
+              },
+              {
+                "name": "overlap_chars",
+                "value": "={{ $('Prechunker').item.json.metadata.overlap_chars }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        592
+      ],
+      "id": "d7ef6a2e-467d-4dec-aae6-5615137735bc",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1952,
+        752
+      ],
+      "id": "bf1adc57-00e3-4f13-994a-895eb0ff7e7c",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is a cleaned segment of PDF text extracted from the file.  \nClean, structure, and flatten it into semantic units for downstream chunking.\n\nTEXT:\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a document structuring and flattening assistant.\nYour job is to analyze cleaned PDF text segments and produce structured JSON ready for downstream chunking and embedding.\n\nInstructions:\n\n1. Segment the text into meaningful sections and subsections using clear headers, numbered patterns, or layout hints.\n2. Detect tabular data within sections and extract it as a structured tables array before transforming.\n   - Preserve row and column boundaries.\n   - Transform tables into readable semantic units without losing cell granularity.\n3. For each section and subsection, transform the title, content, and tables into coherent semantic units:\n   - Each unit should be self-contained and conceptually distinct.\n   - Preserve exact original language with no summarizing, paraphrasing, or hallucinating.\n4. Maintain distinct boundaries between subsections — do not merge unrelated content into a single unit.\n5. Clean text by:\n   - Stripping dotted leader lines (e.g., \"Section Name ............ 3\").\n   - Removing layout artifacts or scan noise (e.g., headers/footers, page numbers).\n   - Ignoring repeated Table of Contents lines unless they add semantic value.\n6. Do not include metadata here. Only process text.\n\n✅ RETURN FORMAT:\n{\n  \"output\": [\n    {\n      \"content\": \"string\"\n    }\n  ]\n}\n\nNotes:\n- Every object must include only a `content` field.\n- Do not add metadata.\n- Output only raw JSON — no Markdown, no code fences, no stringification.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        736,
+        496
+      ],
+      "id": "90a9f6ba-b740-40cf-a227-7d243c44ab2d",
+      "name": "output_prep"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"output\": [\n    {\n      \"content\": \"string\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        736
+      ],
+      "id": "e83a078d-342f-4142-b212-5506a229a9ef",
+      "name": "Content output parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// PURPOSE:\n// This function joins document content with document-level metadata.\n// It:\n// - collects all content sections produced by the LLM (`output_prep`)\n// - pulls the single normalized metadata object\n// - assigns a stable document ID (using filename)\n// - emits one item per content section with shared metadata\n//\n// Output:\n// Multiple items shaped as:\n// { content: \"...\", metadata: { ...doc-level fields..., section_index } }\n// ready for prechunking and vector insertion.\n\n// Collect all content sections from the LLM output\nconst contentItems = $items(\"output_prep\").flatMap(i => i.json.output || []);\n\n// Get the single document-level metadata object\nconst metadata = $items(\"metadata_prep_function\")?.[0]?.json?.metadata || {};\n\n// Ensure a stable document ID (use filename as doc_id)\nmetadata.doc_id = metadata.doc_id || metadata.file || \"\";\n\n// Emit one item per content section\nreturn contentItems.map((c, idx) => ({\n  json: {\n    content: c.content || \"\",\n    metadata: {\n      ...metadata,\n      section_index: idx   // original section order before chunking\n    }\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        416
+      ],
+      "id": "7470723d-434d-4322-a174-8a9d5f7f0deb",
+      "name": "Merge output and metadata"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1168,
+        416
+      ],
+      "id": "adf5a381-b188-4360-8b6f-2be68ab36cf0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        784
+      ],
+      "id": "3cc6a4a1-2f96-4fc4-90a2-9f21932c9492",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// PURPOSE:\n// This function prepares document text for RAG ingestion.\n// It takes cleaned text content and:\n// - splits text into safe, overlapping chunks\n// - enforces size limits to avoid LLM / embedding failures\n// - generates globally unique chunk IDs\n// - preserves document- and section-level metadata for traceability\n//\n// Output:\n// One item per chunk, ready for embedding and insertion\n// into a vector database.\n\n\n// ===== CONFIG =====\nconst CHUNK_SIZE = 3500;   // target chunk size (chars)\nconst OVERLAP = 350;       // overlap between chunks\nconst HARD_MAX = 4200;     // absolute safety cap\n\n// Generate a unique ID (fallback only)\nfunction uuidv4() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n    const r = Math.random() * 16 | 0;\n    const v = c === 'x' ? r : (r & 0x3 | 0x8);\n    return v.toString(16);\n  });\n}\n\n// Rough token estimate (~4 chars per token)\nfunction estTokens(str) {\n  return Math.ceil(str.length / 4);\n}\n\nlet out = [];\n\n// ===== PROCESS EACH INPUT ITEM (SECTION-LEVEL) =====\nfor (const item of items) {\n  const j = item.json || {};\n  const text = String(j.content || \"\").trim();\n  const meta = { ...(j.metadata || {}) };\n\n  if (!text) continue;\n\n  // Ensure document-level ID exists\n  // (prefer filename; UUID only if nothing else)\n  if (!meta.doc_id) meta.doc_id = meta.file || uuidv4();\n\n  let start = 0;\n  let chunkIndex = 0;\n\n  // ===== CHUNK THE SECTION TEXT =====\n  while (start < text.length) {\n    const end = Math.min(start + CHUNK_SIZE, text.length);\n    let slice = text.slice(start, end);\n\n    // Hard safety cap\n    if (slice.length > HARD_MAX) {\n      slice = slice.slice(0, HARD_MAX);\n    }\n\n    const charStart = start;\n    const charEnd = charStart + slice.length;\n\n    // Chunk-level metadata\n    const chunkMeta = {\n      ...meta,\n      chunk_index: chunkIndex,                 \n      chunk_id: `${meta.doc_id}#${meta.section_index}#${chunkIndex}`,\n      char_start: charStart,\n      char_end: charEnd,\n      token_estimate: estTokens(slice),\n      overlap_chars: OVERLAP\n    };\n\n    // Emit chunk\n    out.push({\n      json: {\n        content: slice,\n        metadata: chunkMeta,\n        document_id: meta.doc_id,\n        chunk_index: chunkIndex,\n        chunk_id: `${meta.doc_id}#${meta.section_index}#${chunkIndex}`\n      }\n    });\n\n    // Advance pointer with overlap\n    if (end >= text.length) break;\n    start = end - Math.min(OVERLAP, CHUNK_SIZE - 1);\n    chunkIndex++;\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        416
+      ],
+      "id": "fff64a79-4249-42fb-afde-b809ed678863",
+      "name": "Prechunker"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: JSON from Extract PDF node\n// Output: Array of cleaned chunks under `items`\n\nconst CHUNK_SIZE = 2000;  \n\nfunction cleanText(text) {\n  return text\n    .replace(/•/g, \"-\")           // replace bullets\n    .replace(/\\s{2,}/g, \" \")      // collapse extra spaces\n    .replace(/\\n{2,}/g, \"\\n\\n\")   // normalize line breaks\n    .trim();\n}\n\nfunction chunkText(text, size) {\n  const chunks = [];\n  let i = 0;\n  while (i < text.length) {\n    chunks.push(text.slice(i, i + size));\n    i += size;\n  }\n  return chunks;\n}\n\nconst rawText = $json[\"text\"] || \"\";\nconst cleaned = cleanText(rawText);\nlet chunks = cleaned ? chunkText(cleaned, CHUNK_SIZE) : [];\n\n// Safeguard: if no text/chunks, emit a fallback item\nif (chunks.length === 0) {\n  chunks = [\"[NO TEXT EXTRACTED]\"];\n}\n\n// Emit chunks as array of items\nreturn chunks.map(c => ({ text: c }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        496
+      ],
+      "id": "e3a850aa-71ec-4f1c-be0d-44760b7b9aab",
+      "name": "Pre-clean"
+    },
+    {
+      "parameters": {
+        "jsCode": "// PURPOSE:\n// This function prepares document-level metadata for RAG ingestion.\n// It takes raw form inputs and:\n// - maps them into a normalized metadata schema\n// - ensures all required fields exist\n// - coerces all values to strings\n// - provides safe defaults (\"\") for missing fields\n//\n// Output:\n// A single metadata object that will be attached\n// to every content chunk downstream.\n\nconst title = $json.title ?? \"\";\nconst author = $json.author ?? \"\";\nconst year = $json.year ?? \"\";\nconst category = $json.category ?? \"\";\nconst document_type = $json.document_type ?? \"\";\nconst file = $json.upload_pdf?.filename ?? \"\";\nconst submitted_at = $json.submittedAt ?? \"\";\n\nreturn [{\n  json: {\n    metadata: {\n      title: String(title),\n      author: String(author),\n      year: String(year),\n      category: String(category),\n      document_type: String(document_type),\n      file: String(file),\n      submitted_at: String(submitted_at),\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        128
+      ],
+      "id": "35e8f92c-b96b-48ac-99b1-c3d0fe98330c",
+      "name": "metadata_prep_function"
+    },
+    {
+      "parameters": {
+        "content": "Merge node needed to wait for both paths to complete before next function runs",
+        "height": 112,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1120,
+        288
+      ],
+      "typeVersion": 1,
+      "id": "25d560bc-4350-4297-b396-dc08e467509a",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "metadata_prep_function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Pre-clean",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content output parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "output_prep",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "output_prep": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge output and metadata": {
+      "main": [
+        [
+          {
+            "node": "Prechunker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge output and metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "output_prep",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prechunker": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-clean": {
+      "main": [
+        [
+          {
+            "node": "output_prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "metadata_prep_function": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8920d776-3798-4463-89e3-7b82f4b908ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "mFQEOhyMf43THoNp",
+  "tags": [
+    {
+      "updatedAt": "2025-12-22T01:38:27.755Z",
+      "createdAt": "2025-12-22T01:38:27.755Z",
+      "id": "lehXoMY1qHIn0irR",
+      "name": "RAGForge"
+    }
+  ]
+}
