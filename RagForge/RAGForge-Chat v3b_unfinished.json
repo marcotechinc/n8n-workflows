@@ -1,0 +1,833 @@
+{
+  "name": "RAGForge-Chat v3b_unfinished",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -192
+      ],
+      "id": "7a68fa53-1d89-4092-8b20-2f347b15f825",
+      "name": "When chat message received",
+      "webhookId": "ec8400a4-fdab-4172-b3ee-bacf21d86200"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ $json.chatInput }}"
+            },
+            {
+              "role": "system",
+              "content": "Classify the user message.\n\nIf it is a greeting, small talk, or unrelated → CHAT  \nIf it requests new documents, searches, listings, or retrieval → DOC  \nIf it refers to previously mentioned results (e.g. “first one”, “second one”, “that document”, “summarize it”) → FOLLOW_UP\n\nReturn ONLY one word:\nCHAT, DOC, or FOLLOW_UP"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        -192
+      ],
+      "id": "521fe0f3-98bf-47a1-8cb5-bda87b254d27",
+      "name": "Intent Classifier",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        2800,
+        -512
+      ],
+      "id": "94afcb69-fd8e-4373-b82d-921b0538723c",
+      "name": "Chat Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2736,
+        -320
+      ],
+      "id": "60d3b123-0d1c-4aae-b866-bee2de06f3a0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Prep Chat Input').item.json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        2960,
+        -320
+      ],
+      "id": "9f416105-fabf-4923-aa8a-f82492fe1fe0",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You extract document metadata AND determine whether there is real semantic search intent.\n\nReturn ONLY valid JSON.\nNo markdown. No code fences. No explanations.\n\nALWAYS return this shape:\n{\n  \"filters\": {\n    \"author\": \"Manus\" | \"EQX\" | \"Hyperlight\" | null,\n    \"document_type\": \"Business Case\" | \"Project Charter\" | \"Religious\" | \"Agile\" | \"Operations Guide\" | null,\n    \"year\": \"2023\" | \"2024\" | \"2025\" | null,\n    \"category\": \"Faith\" | \"Tech\" | \"Strategy\" | null\n  },\n  \"cleaned_query\": \"\"\n}\n\nRules for filters:\n- Extract filters only if explicitly mentioned.\n- Matching is case-insensitive; output must use the allowed casing.\n- Never output empty strings.\n- Use null for non-matching fields.\n- Never remove a valid extracted filter.\n\nRules for cleaned_query:\n- Start from the original user message.\n- Remove all filter terms (author names, years, document types, categories).\n- Remove generic listing phrases, including but not limited to:\n  - \"list all docs\"\n  - \"list documents\"\n  - \"show all documents\"\n  - \"show docs\"\n  - \"list files\"\n  - \"list all\"\n  - \"show all\"\n- cleaned_query should contain ONLY meaningful semantic intent (questions/topics).\n- If nothing meaningful remains, set cleaned_query to an empty string \"\".\n\nFinal rule:\n- If all filters are null AND cleaned_query is empty, return:\n{\n  \"filters\": {},\n  \"cleaned_query\": \"\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        2352,
+        -16
+      ],
+      "id": "8c10b8de-6f45-40e5-8410-45dfa44ade99",
+      "name": "Metadata Extractor"
+    },
+    {
+      "parameters": {
+        "options": {
+          "stripNewLines": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3232,
+        -576
+      ],
+      "id": "83e3f16e-6f5b-4426-9956-c0a4a335b5cb",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        3520,
+        -576
+      ],
+      "id": "ef76db24-a92e-4e55-9f7d-a2538fe1cf05",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "t5C5629l3ApBhaVm",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "CHAT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "efdef728-dd41-4cd3-b385-eca61a4912b4"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1b4d74e0-d5fe-484e-b83a-ae6ada9253e8",
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "DOC",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b1ef9dc6-6443-4799-96a0-97643bd4d845",
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "FOLLOW_UP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1520,
+        -192
+      ],
+      "id": "1330a30b-7eed-4c56-8b81-018cff70a30e",
+      "name": "Intent Router"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "CHAT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "27525bb3-ed48-40f3-8fd5-21667ef44025"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3b6ae979-24b7-45e9-bc80-ef1a43fed95d",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "SEMANTIC",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7dc5487c-dc5d-4bc2-82ea-b6eec28dd265",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "METADATA_ONLY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        3008,
+        -128
+      ],
+      "id": "9328e57b-9aa8-4e31-bf79-9c04d2b48ea7",
+      "name": "Query Route Selector"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rfcmhcxcfnlbfgmlcabi.supabase.co/rest/v1/rpc/list_document_metadata",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY21oY3hjZm5sYmZnbWxjYWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MzIzOTMsImV4cCI6MjA2NjIwODM5M30.yi0SMovFIIfQRnzlj1dswkLKfebg2YmFhBbgzIuqVxI"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY21oY3hjZm5sYmZnbWxjYWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA2MzIzOTMsImV4cCI6MjA2NjIwODM5M30.yi0SMovFIIfQRnzlj1dswkLKfebg2YmFhBbgzIuqVxI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "p_author",
+              "value": "={{ $json.filters.author ?? null }}"
+            },
+            {
+              "name": "p_document_type",
+              "value": "={{ $json.filters.document_type ?? null  }}"
+            },
+            {
+              "name": "p_year",
+              "value": "={{ $json.filters.year ?? null  }}"
+            },
+            {
+              "name": "p_category",
+              "value": "={{ $json.filters.category ?? null  }}"
+            },
+            {
+              "name": "p_limit",
+              "value": "50"
+            },
+            {
+              "name": "p_offset",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3232,
+        -16
+      ],
+      "id": "786fe42c-6176-4f8c-85fc-d56fb36c04bd",
+      "name": "Fetch Document Metadata (RPC)",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let obj;\n\n// 1) Parse input (handle JSON-as-text from LLM)\nif (typeof $json.text === 'string') {\n  obj = JSON.parse($json.text);\n} else {\n  obj = $json;\n}\n\n// 2) Normalize filters\nconst filtersIn = obj.filters || {};\nconst cleaned_query = (obj.cleaned_query || \"\").trim();\n\nconst filtersOut = {};\nfor (const [k, v] of Object.entries(filtersIn)) {\n  if (v !== null && v !== undefined && v !== \"\") {\n    filtersOut[k] = v;\n  }\n}\n\n// 3) Determine route\nlet route = \"CHAT\";\nif (cleaned_query.length > 0) {\n  route = \"SEMANTIC\";\n} else if (Object.keys(filtersOut).length > 0) {\n  route = \"METADATA_ONLY\";\n}\n\n// 4) Final normalized payload\nreturn [{\n  json: {\n    filters: filtersOut,\n    cleaned_query,\n    route\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2736,
+        -16
+      ],
+      "id": "262fb1b2-508f-491d-8bfe-5d862619bab2",
+      "name": "Normalize & Route Query"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map(i => i.json);\n\n// Build doc objects\nconst docs = items.map(d => ({\n  doc_id: d.doc_id,\n  title: d.title,\n  author: d.author,\n  year: d.year,\n  document_type: d.document_type,\n  category: d.category,\n  file: d.file\n}));\n\n// Build readable text\nconst lines = docs.map(d =>\n  `• ${d.title} (${d.year}) — ${d.document_type} / ${d.category}`\n);\n\nreturn [{\n  json: {\n    ...items[0], // PRESERVE sessionId, cag, etc.\n    mode: \"METADATA_ONLY\",\n    count: docs.length,\n    text:\n      docs.length === 0\n        ? \"I didn’t find any matching documents.\"\n        : `I found ${docs.length} document(s):\\n\\n${lines.join(\"\\n\")}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        -16
+      ],
+      "id": "9a31999c-24d3-4499-ad81-f1b35df667c9",
+      "name": "Format Metadata-Only Response"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "document_vectors",
+          "mode": "list",
+          "cachedResultName": "document_vectors"
+        },
+        "prompt": "={{ $json.cleaned_query }}",
+        "useReranker": true,
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "year",
+                "value": "={{ $json.filters.year }}"
+              },
+              {
+                "name": "document_type",
+                "value": "={{ $json.filters.document_type }}"
+              },
+              {
+                "name": "author",
+                "value": "={{ $json.filters.author }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.filters.category }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        3360,
+        -368
+      ],
+      "id": "60f857ac-6081-45e3-919f-80ea6aef6811",
+      "name": "Semantic Retrieval",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst text =\n  items[0]?.json?.text ??\n  items[0]?.json?.chatInput ??\n  items\n    .map(i => i.json.document?.pageContent)\n    .filter(Boolean)\n    .join('\\n\\n') ??\n  \"\";\n\nreturn [\n  {\n    json: {\n      ...items[0].json,  // ← THIS is the critical line\n      text,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2528,
+        -512
+      ],
+      "id": "20dc3275-6a16-447f-8792-6f56f5af50e8",
+      "name": "Prep Chat Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\nreturn items.map(item => {\n  const sessionId =\n    item.json.sessionId ??\n    $('When chat message received').first().json.sessionId;\n\n  store.sessionId = sessionId;\n  store.cag ??= item.json.cag ?? {\n    last_action: null,\n    last_docs: [],\n    active_doc: null,\n  };\n\n  item.json.sessionId = sessionId;\n  item.json.cag = store.cag;\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        -512
+      ],
+      "id": "888a870d-aab9-435f-888e-d484a47191d8",
+      "name": "Update CAG / Session"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\nreturn items.map(item => {\n  store.cag ??= { last_action: null, last_docs: [], active_doc: null };\n  store.sessionId ??= item.json.sessionId;\n\n  item.json.sessionId = store.sessionId;\n  item.json.cag = store.cag;\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        -192
+      ],
+      "id": "8cc2a8d5-074b-4029-9bb8-0be8e47f9886",
+      "name": "Set CAG / Session"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\nreturn items.map(item => {\n  // ensure sessionId (single-session)\n  store.sessionId ??= item.json.sessionId;\n  item.json.sessionId = store.sessionId;\n\n  // ensure CAG exists\n  store.cag ??= {\n    last_action: null,\n    last_docs: [],\n    active_doc: null,\n  };\n\n  // mutate for METADATA_ONLY\n  store.cag.last_action = \"METADATA_ONLY\";\n  store.cag.last_docs = items.map(d => ({\n    doc_id: d.json.doc_id,\n    title: d.json.title,\n    author: d.json.author,\n    year: d.json.year,\n    document_type: d.json.document_type,\n    category: d.json.category,\n    file: d.json.file,\n  }));\n  store.cag.active_doc = null;\n\n  // re-attach\n  item.json.cag = store.cag;\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3456,
+        -16
+      ],
+      "id": "aabdaf20-cab1-41fd-94fa-5cab051555a3",
+      "name": "CAG Mutate – METADATA_ONLY"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\nreturn items.map(item => {\n  // ensure sessionId exists (single-session)\n  store.sessionId ??= item.json.sessionId;\n  item.json.sessionId = store.sessionId;\n\n  // ensure CAG exists\n  store.cag ??= {\n    last_action: null,\n    last_docs: [],\n    active_doc: null,\n  };\n\n  // mutate (example)\n  store.cag.last_action = \"CHAT\"; // or LIST_DOCS / SEMANTIC\n\n  // re-attach\n  item.json.cag = store.cag;\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        -368
+      ],
+      "id": "45b9c1dc-dd9e-48c3-9b91-026cc89b9798",
+      "name": "CAG Mutate – CHAT"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\nreturn items.map(item => {\n  // ensure sessionId\n  const sessionId =\n    item.json.sessionId ??\n    $('When chat message received').first().json.sessionId;\n\n  store.sessionId = sessionId;\n\n  // ensure CAG exists\n  store.cag ??= {\n    last_action: null,\n    last_docs: [],\n    active_doc: null,\n  };\n\n  // mutate for SEMANTIC\n  store.cag.last_action = \"SEMANTIC\";\n  store.cag.last_docs = items.map(i => ({\n    doc_id: i.json.document?.metadata?.doc_id ?? i.json.document?.metadata?.file,\n    title: i.json.document?.metadata?.title,\n    author: i.json.document?.metadata?.author,\n    year: i.json.document?.metadata?.year,\n    document_type: i.json.document?.metadata?.document_type,\n    category: i.json.document?.metadata?.category,\n    file: i.json.document?.metadata?.file,\n    score: i.json.score,\n  }));\n  store.cag.active_doc = null;\n\n  // re-attach\n  item.json.sessionId = store.sessionId;\n  item.json.cag = store.cag;\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        -368
+      ],
+      "id": "24eaaecf-ef92-4223-95a5-b72f1f918d33",
+      "name": "CAG Mutate – Semantic"
+    },
+    {
+      "parameters": {
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\nreturn items.map(item => {\n  const text = (item.json.chatInput ?? \"\").toLowerCase();\n  const cag = store.cag;\n\n  // default: treat as NOT resolved follow-up\n  let resolved = false;\n\n  if (cag?.last_docs?.length) {\n    let idx = null;\n    if (text.includes(\"first\")) idx = 0;\n    else if (text.includes(\"second\")) idx = 1;\n    else if (text.includes(\"third\")) idx = 2;\n\n    if (idx !== null && cag.last_docs[idx]) {\n      cag.active_doc = cag.last_docs[idx];\n      resolved = true;\n    } else {\n      cag.active_doc = null; // ambiguous\n      resolved = true;       // still a follow-up, just needs clarification\n    }\n  }\n\n  // persist + reattach\n  store.cag = cag;\n\n  item.json = {\n    ...item.json,          // keep output, sessionId, etc.\n    cag: store.cag,\n    sessionId: store.sessionId ?? item.json.sessionId,\n    followUpResolved: resolved,\n  };\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        144
+      ],
+      "id": "383dbb63-7c18-45c6-bbd2-127b67a0ff0a",
+      "name": "Resolve Follow-Up Reference"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Set CAG / Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Classifier": {
+      "main": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Chat Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Metadata Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Chat Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metadata Extractor": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Route Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Semantic Retrieval",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Semantic Retrieval",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Intent Router": {
+      "main": [
+        [
+          {
+            "node": "CAG Mutate – CHAT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Metadata Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resolve Follow-Up Reference",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Route Selector": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Semantic Retrieval",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Document Metadata (RPC)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Document Metadata (RPC)": {
+      "main": [
+        [
+          {
+            "node": "CAG Mutate – METADATA_ONLY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Route Query": {
+      "main": [
+        [
+          {
+            "node": "Query Route Selector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Metadata-Only Response": {
+      "main": [
+        [
+          {
+            "node": "Update CAG / Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Semantic Retrieval": {
+      "main": [
+        [
+          {
+            "node": "CAG Mutate – Semantic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Chat Input": {
+      "main": [
+        [
+          {
+            "node": "Chat Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CAG / Session": {
+      "main": [
+        [
+          {
+            "node": "Prep Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set CAG / Session": {
+      "main": [
+        [
+          {
+            "node": "Intent Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CAG Mutate – METADATA_ONLY": {
+      "main": [
+        [
+          {
+            "node": "Format Metadata-Only Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CAG Mutate – CHAT": {
+      "main": [
+        [
+          {
+            "node": "Update CAG / Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CAG Mutate – Semantic": {
+      "main": [
+        [
+          {
+            "node": "Update CAG / Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ccffee5-38b0-4193-b5ed-ac6edc0bee5a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "edsMJ24LjU8qJdYI",
+  "tags": [
+    {
+      "updatedAt": "2025-12-22T01:38:27.755Z",
+      "createdAt": "2025-12-22T01:38:27.755Z",
+      "id": "lehXoMY1qHIn0irR",
+      "name": "RAGForge"
+    }
+  ]
+}
