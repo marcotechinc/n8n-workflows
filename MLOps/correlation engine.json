@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        0
+        112,
+        16
       ],
       "id": "ac4c9208-fe8d-4492-8d7e-3636ff78e508",
       "name": "When clicking ‘Execute workflow’"
@@ -18,13 +18,13 @@
         "tableId": "status_watch_feeds",
         "limit": 100,
         "filterType": "string",
-        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 48 }).toISO() }}\n&category=is.not_null\n&topic=is.not_null\n&content=is.not_null\n&source=neq.Hacker%20News\n&order=inserted_at.desc"
+        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 48 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        240,
-        0
+        352,
+        16
       ],
       "id": "16ab64a1-370e-44ec-bfcd-1154f61a73d5",
       "name": "Query candidate feeds",
@@ -86,11 +86,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        736,
-        0
+        848,
+        -176
       ],
       "id": "b7836e63-dabc-4e84-aa5c-c1ed98d88c8a",
-      "name": "Promotion to incidents"
+      "name": "Promotion to incidents",
+      "disabled": true
     },
     {
       "parameters": {
@@ -100,8 +101,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        720,
-        -160
+        816,
+        -256
       ],
       "typeVersion": 1,
       "id": "db43ac2a-ec58-44c1-b5bc-cd8ea65bc246",
@@ -109,16 +110,17 @@
     },
     {
       "parameters": {
-        "jsCode": "// Input: items = raw signals (array)\n// Output: incidents (array)\n\nconst WINDOW_HOURS = 48;\nconst MIN_SIGNALS = 3;\n\nfunction bucket(ts) {\n  const d = new Date(ts);\n  d.setUTCHours(Math.floor(d.getUTCHours() / WINDOW_HOURS) * WINDOW_HOURS, 0, 0, 0);\n  return d.toISOString();\n}\n\nconst groups = {};\n\nfor (const item of items) {\n  const s = item.json;\n  if (!s.topic || !s.category || !s.date) continue;\n\n  const windowStart = bucket(s.date);\n  const key = `${s.topic}__${s.category}__${windowStart}`;\n\n  if (!groups[key]) {\n    groups[key] = {\n      incident_id: key,\n      status: \"incident\",\n      topic: s.topic,\n      category: s.category,\n      window_start: windowStart,\n      window_end: null,\n      signal_count: 0,\n      signals: []\n    };\n  }\n\n  groups[key].signals.push(s);\n  groups[key].signal_count += 1;\n}\n\nconst incidents = Object.values(groups)\n  .filter(i => i.signal_count >= MIN_SIGNALS)\n  .map(i => {\n    const dates = i.signals.map(s => new Date(s.date));\n    i.window_start = new Date(Math.min(...dates)).toISOString();\n    i.window_end = new Date(Math.max(...dates)).toISOString();\n    return i;\n  });\n\nreturn incidents.map(i => ({ json: i }));"
+        "jsCode": "// Input: items = feed rows from Supabase\n// Output: time-based buckets for LLM correlation (NO correlation here)\n\nconst feeds = items.map(i => i.json);\n\n// config\nconst WINDOW_HOURS = 8;\nconst MAX_SIGNALS_PER_BUCKET = 40;\n\nfunction floorToWindow(date, hours) {\n  const d = new Date(date);\n  const ms = hours * 60 * 60 * 1000;\n  return new Date(Math.floor(d.getTime() / ms) * ms);\n}\n\nconst buckets = new Map();\n\nfor (const f of feeds) {\n  const topic = f.topic ?? \"Other\";\n  const category = f.category ?? \"Other\";\n\n  const start = floorToWindow(f.inserted_at, WINDOW_HOURS);\n  const end = new Date(start.getTime() + WINDOW_HOURS * 60 * 60 * 1000);\n\n  const bucketKey = `${topic}__${category}__${start.toISOString()}`;\n\n  if (!buckets.has(bucketKey)) {\n    buckets.set(bucketKey, {\n      bucket_id: bucketKey,\n      topic,\n      category,\n      window_start: start.toISOString(),\n      window_end: end.toISOString(),\n      signals: [],\n    });\n  }\n\n  const b = buckets.get(bucketKey);\n\n  // Always pass real article content to the LLM\n  b.signals.push({\n    id: f.id,\n    title: f.title,\n    source: f.source,\n    date: f.date,\n    inserted_at: f.inserted_at,\n    content: f.content ?? f.summary ?? f.title ?? \"\",\n  });\n}\n\n// Cap bucket size to protect prompt length\nfor (const b of buckets.values()) {\n  if (b.signals.length > MAX_SIGNALS_PER_BUCKET) {\n    b.signals = b.signals.slice(b.signals.length - MAX_SIGNALS_PER_BUCKET);\n  }\n}\n\nreturn Array.from(buckets.values()).map(b => ({ json: b }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        480,
-        0
+        624,
+        16
       ],
       "id": "4862b55e-7b08-44b1-8ea3-0dc7b7e0a008",
-      "name": "Pre-group (bucketing)"
+      "name": "Pre-group (bucketing)",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -141,8 +143,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        944,
-        0
+        928,
+        32
       ],
       "id": "2e8f1231-5e11-47ed-8ddb-1653b84c45ac",
       "name": "Loop Over Items"
@@ -150,15 +152,15 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ JSON.stringify($json) }}",
+        "text": "=You are given a bucket of news signals that occurred within the same time window.\n\nEach signal is an article with title, source, and content.\n\nYour task:\n- Decide which signals describe the same real-world incident\n- Produce one incident per real-world event\n- Include the ORIGINAL content so correlations are auditable\n\nInput signals:\n{{ JSON.stringify($json.signals) }}\n\nOutput format (STRICT):\n[\n  {\n    \"incident_id\": \"<stable id>\",\n    \"title\": \"<concise incident title>\",\n    \"summary\": [\n      \"<bullet 1>\",\n      \"<bullet 2>\"\n    ],\n    \"articles\": [\n      {\n        \"signal_id\": \"<id>\",\n        \"source\": \"<source>\",\n        \"title\": \"<title>\",\n        \"content\": \"<original content>\"\n      }\n    ],\n    \"confidence\": 0.0\n  }\n]",
         "options": {
-          "systemMessage": "You are summarizing a correlated incident.\n\nYou are given ONE incident object containing MULTIPLE signals.\n\nYour job:\n- Explain WHAT ties these signals together.\n- Do NOT list signals one by one.\n- Do NOT restate metadata.\n- Do NOT invent facts.\n- Use only the provided signals.\n\nReturn STRICT JSON.\nNO markdown.\nNO code fences.\n\nSchema:\n{\n  \"incident_id\": string,\n  \"summary\": string,\n  \"links\": [\n    {\n      \"title\": string,\n      \"source\": string\n    }\n  ]\n}\n"
+          "systemMessage": "You are a correlation engine.\n\nYour job:\n- Look at a bucket of signals that occurred close in time\n- Decide which signals describe the same real-world incident\n- Create one incident per real-world event\n\nRules:\n- Correlation REQUIRES at least 2 signals\n- If a signal does not correlate with another, DO NOT output it\n- Do NOT invent facts\n- Do NOT merge unrelated stories\n- Use signal titles and content only\n- If unsure, keep incidents separate\n\nYou MUST return:\n- incident_id\n- title\n- summary (2–3 bullets)\n- articles (each with signal_id, source, title, content)\n- confidence (0–1)\n\nReturn JSON only. No prose."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1200,
+        1408,
         208
       ],
       "id": "c7707f43-40ff-4620-9cab-a26b2067f6ba",
@@ -177,8 +179,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        1136,
-        416
+        1344,
+        432
       ],
       "id": "dce4a1e8-884c-4533-a6e5-fd05dc97feaa",
       "name": "OpenAI Chat Model",
@@ -196,8 +198,8 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        1344,
-        432
+        1568,
+        448
       ],
       "id": "44f76171-dee0-43eb-a09c-d17b235e1069",
       "name": "Structured Output Parser",
@@ -205,12 +207,12 @@
     },
     {
       "parameters": {
-        "jsCode": "// Input: LLM output as string in $json.output\n\nconst raw = $json.output;\nconst parsed = JSON.parse(raw);\n\nreturn [{\n  json: {\n    incident_id: parsed.incident_id,\n    summary: parsed.summary,\n    links: parsed.links || []\n  }\n}];"
+        "jsCode": "// 1. Get raw LLM output\nconst raw = $json.output ?? $json;\n\n// 2. If it's a string, strip ```json fences and parse\nlet incidents;\nif (typeof raw === 'string') {\n  const cleaned = raw\n    .replace(/```json/g, '')\n    .replace(/```/g, '')\n    .trim();\n\n  incidents = JSON.parse(cleaned);\n} else {\n  incidents = raw;\n}\n\n// 3. Fan out incidents into n8n items\nreturn incidents.map(i => ({ json: i }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1552,
+        1760,
         208
       ],
       "id": "c0c62c45-e4d8-4658-9343-8063217ed873",
@@ -231,7 +233,7 @@
             },
             {
               "fieldId": "links",
-              "fieldValue": "={{ $json.links }}"
+              "fieldValue": "={{ $json.articles }}"
             }
           ]
         }
@@ -239,7 +241,7 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1760,
+        1968,
         208
       ],
       "id": "e3266b15-aa3c-458c-94fb-ade90c0884ae",
@@ -301,7 +303,7 @@
       "main": [
         [
           {
-            "node": "Promotion to incidents",
+            "node": "Loop Over Items",
             "type": "main",
             "index": 0
           }
@@ -315,13 +317,7 @@
     },
     "Promotion to incidents": {
       "main": [
-        [
-          {
-            "node": "Loop Over Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Loop Over Items": {
@@ -391,7 +387,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "b2aaa9af-ada9-4c37-93ee-121d67a93d10",
+  "versionId": "557482c6-e0c1-4642-9f13-a384ba9fd1f7",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
