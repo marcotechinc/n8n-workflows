@@ -154,13 +154,13 @@
         "promptType": "define",
         "text": "=You are given a bucket of news signals that occurred within the same time window.\n\nEach signal is an article with title, source, and content.\n\nYour task:\n- Decide which signals describe the same real-world incident\n- Produce one incident per real-world event\n- Include the ORIGINAL content so correlations are auditable\n\nInput signals:\n{{ JSON.stringify($json.signals) }}\n\nOutput format (STRICT):\n[\n  {\n    \"incident_id\": \"<stable id>\",\n    \"title\": \"<concise incident title>\",\n    \"summary\": [\n      \"<bullet 1>\",\n      \"<bullet 2>\"\n    ],\n    \"articles\": [\n      {\n        \"signal_id\": \"<id>\",\n        \"source\": \"<source>\",\n        \"title\": \"<title>\",\n        \"content\": \"<original content>\"\n      }\n    ],\n    \"confidence\": 0.0\n  }\n]",
         "options": {
-          "systemMessage": "You are a correlation engine.\n\nYour job:\n- Look at a bucket of signals that occurred close in time\n- Decide which signals describe the same real-world incident\n- Create one incident per real-world event\n\nRules:\n- Correlation REQUIRES at least 2 signals\n- If a signal does not correlate with another, DO NOT output it\n- Do NOT invent facts\n- Do NOT merge unrelated stories\n- Use signal titles and content only\n- If unsure, keep incidents separate\n\nYou MUST return:\n- incident_id\n- title\n- summary (2–3 bullets)\n- articles (each with signal_id, source, title, content)\n- confidence (0–1)\n\nReturn JSON only. No prose."
+          "systemMessage": "You are an incident correlation engine.\n\nYour job is to identify REAL-WORLD INCIDENTS, not themes or topics.\n\nDefinition:\n- An incident is ONE specific real-world event\n  (e.g. announcement, outage, breach, lawsuit, policy change).\n- An incident MUST be supported by at least TWO independent articles\n  describing the SAME event.\n\nRules (STRICT):\n- If there is NO single real-world event shared by at least two articles,\n  you MUST return an empty array [].\n- Do NOT cluster by theme, market sentiment, or general discussion.\n- Do NOT merge opinion pieces or analysis unless they reference the SAME trigger.\n- If unsure, return [].\n- Do NOT invent connections.\n\nYou MUST return:\n- [] if no incident exists\nOR\n- An array of incidents, each with:\n  - incident_id\n  - title\n  - summary (2–3 bullets)\n  - articles (>= 2, same event)\n  - confidence (0–1)\n\nReturn JSON only. No prose."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1408,
+        1264,
         208
       ],
       "id": "c7707f43-40ff-4620-9cab-a26b2067f6ba",
@@ -179,8 +179,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        1344,
-        432
+        1200,
+        464
       ],
       "id": "dce4a1e8-884c-4533-a6e5-fd05dc97feaa",
       "name": "OpenAI Chat Model",
@@ -198,8 +198,8 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        1568,
-        448
+        1440,
+        480
       ],
       "id": "44f76171-dee0-43eb-a09c-d17b235e1069",
       "name": "Structured Output Parser",
@@ -207,13 +207,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. Get raw LLM output\nconst raw = $json.output ?? $json;\n\n// 2. If it's a string, strip ```json fences and parse\nlet incidents;\nif (typeof raw === 'string') {\n  const cleaned = raw\n    .replace(/```json/g, '')\n    .replace(/```/g, '')\n    .trim();\n\n  incidents = JSON.parse(cleaned);\n} else {\n  incidents = raw;\n}\n\n// 3. Fan out incidents into n8n items\nreturn incidents.map(i => ({ json: i }));"
+        "jsCode": "// 1. Get raw LLM output\nconst raw = $json.output ?? $json;\n\n// 2. Parse JSON (handle fenced output)\nlet incidents;\nif (typeof raw === 'string') {\n  const cleaned = raw\n    .replace(/```json/g, '')\n    .replace(/```/g, '')\n    .trim();\n\n  incidents = JSON.parse(cleaned);\n} else {\n  incidents = raw;\n}\n\n// 3. HARD GATE: keep only real incidents (>= 2 articles)\nconst valid = (incidents || []).filter(i =>\n  Array.isArray(i.articles) && i.articles.length >= 2\n);\n\n// 4. Fan out\nreturn valid.map(i => ({ json: i }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1760,
-        208
+        1888,
+        192
       ],
       "id": "c0c62c45-e4d8-4658-9343-8063217ed873",
       "name": "Output formatter"
@@ -241,8 +241,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1968,
-        208
+        2064,
+        176
       ],
       "id": "e3266b15-aa3c-458c-94fb-ade90c0884ae",
       "name": "Create a row",
@@ -268,6 +268,50 @@
       "typeVersion": 1,
       "id": "e880d98b-328b-4905-ad99-5013ab8d617d",
       "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "90bb48be-9aee-4016-a8ca-34559c0f7ab7",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "24bb346e-768a-4d68-8b48-6b10116c98ce",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1648,
+        208
+      ],
+      "id": "8c7d6cfe-d878-4c75-b9e1-688a28baebed",
+      "name": "If"
     }
   ],
   "pinData": {},
@@ -336,7 +380,7 @@
       "main": [
         [
           {
-            "node": "Output formatter",
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -380,6 +424,24 @@
           }
         ]
       ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Output formatter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -387,7 +449,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "557482c6-e0c1-4642-9f13-a384ba9fd1f7",
+  "versionId": "a4232cd8-97a4-4175-abbd-23aa6b4ebc02",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
