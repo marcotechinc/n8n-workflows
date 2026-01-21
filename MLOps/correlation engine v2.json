@@ -178,7 +178,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "You are an incident correlation engine.\n\nYour job is to identify REAL-WORLD INCIDENTS, not themes or related stories.\n\nDefinition:\n- An incident is ONE specific real-world event\n  (announcement, rollout, policy change, lawsuit, outage, enforcement action).\n- An incident MUST be reported by AT LEAST TWO DIFFERENT SOURCES.\n\nSTRICT RULES:\n- You MUST verify that each incident contains articles from at least TWO DISTINCT sources.\n- If all articles for a potential incident come from the SAME source, it is INVALID.\n- Related context, follow-ups, analysis, or legislative discussion do NOT count as the same incident unless they reference the SAME triggering event.\n- Do NOT cluster by topic, market movement, or ongoing debate.\n- If you cannot clearly identify a single triggering event shared by two sources, return [].\n- If unsure, return [].\n- Do NOT invent connections.\n\nVALIDATION STEP (MANDATORY):\nBefore outputting an incident, check:\n- Number of articles ≥ 2\n- Number of DISTINCT sources ≥ 2\nIf either fails → DO NOT OUTPUT THE INCIDENT.\n\nReturn JSON only. No prose."
+              "message": "You are an incident correlation engine.\n\nYour job is to identify REAL-WORLD INCIDENTS, not themes.\n\nDefinition:\n- An incident is ONE specific real-world event\n  (announcement, rollout, policy change, lawsuit, outage, enforcement action).\n- An incident MUST be supported by AT LEAST TWO DISTINCT SOURCES.\n\nSTRICT RULES:\n- You MUST verify at least two DIFFERENT sources per incident.\n- Do NOT cluster by topic, hype, sentiment, or general discussion.\n- Do NOT invent connections.\n- If unsure, return [].\n\nTOPIC HANDLING:\n- You MUST NOT invent or change the topic.\n- Use ONLY the provided topic value.\n- If an incident clearly spans domains, keep the topic unchanged\n  and add a short note explaining the cross-domain nature.\n\nOUTPUT RULE:\n- If no valid incident exists, return [].\n- Return JSON only. No prose."
             }
           ]
         },
@@ -324,7 +324,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "db4ddc8f-b2a6-4319-8d84-3557ea5b8af4",
+  "versionId": "3f2dae67-ec50-4965-b5a4-f4a3a3807a28",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
