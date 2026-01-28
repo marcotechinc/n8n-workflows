@@ -1,0 +1,180 @@
+{
+  "name": "GraphDB insert",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "b7298ac5-fc8b-456c-9bc0-78f156b6747b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_incidents",
+        "limit": 500,
+        "filterType": "string",
+        "filterString": "=created_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&order=created_at.asc&select=id,incident_id,topic,summary,links,correlation_engine,created_at"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -32
+      ],
+      "id": "f4095955-6ae5-4161-b7a6-03b8359a78a3",
+      "name": "Query last 7 days incidents",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Function node\n// Output ONLY Incident rows (1 per incident), graph-ready\n\nconst out = [];\n\nfor (const i of items.map(x => x.json)) {\n\n  const links = Array.isArray(i.links) ? i.links : [];\n\n  // derive event_time = earliest signal time\n  const eventTimes = links\n    .map(l => Date.parse(l.event_time))\n    .filter(t => !isNaN(t));\n\n  const eventTime =\n    eventTimes.length > 0 ? new Date(Math.min(...eventTimes)) : null;\n\n  const sources = [...new Set(links.map(l => l.source).filter(Boolean))];\n\n  out.push({\n    json: {\n      incident_id: i.incident_id,\n      topic: i.topic,\n\n      // normalize summary\n      summary: typeof i.summary === \"string\"\n        ? JSON.parse(i.summary)\n        : i.summary,\n\n      sources,                       // [\"Bloomberg\", \"FT\", ...]\n      event_time: eventTime ? eventTime.toISOString() : null,\n      event_date: eventTime ? eventTime.toISOString().slice(0, 10) : null,\n      event_year: eventTime ? eventTime.getUTCFullYear() : null,\n      event_month: eventTime ? eventTime.getUTCMonth() + 1 : null,\n\n      correlation_engine: i.correlation_engine,\n      created_at: i.created_at\n    }\n  });\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "f1f60397-3b34-418f-8486-7911f2f94670",
+      "name": "Prep for GraphDB"
+    },
+    {
+      "parameters": {
+        "resource": "graphDb",
+        "indexName": "",
+        "cypherQuery": "=MERGE (i:Incident { incident_id: \"{{ $json.incident_id }}\" })\nSET\n  i.summary = {{ JSON.stringify($json.summary) }},\n  i.created_at = datetime(\"{{ $json.created_at }}\"),\n  i.event_time = datetime(\"{{ $json.event_time }}\")\n\nWITH i\n\nMERGE (t:Topic { name: \"{{ $json.topic }}\" })\nMERGE (i)-[:HAS_TOPIC]->(t)\n\nWITH i, t\n\nMERGE (c:CorrelationEngine { name: \"{{ $json.correlation_engine }}\" })\nMERGE (i)-[:CLUSTERED_BY]->(c)\n\nWITH i, t\n\nUNWIND {{ JSON.stringify($json.sources) }} AS src\nMERGE (s:Source { name: src })\nMERGE (s)-[:REPORTED]->(i)\nMERGE (s)-[:REPORTED_ON_TOPIC]->(t)"
+      },
+      "type": "n8n-nodes-neo4j.neo4j",
+      "typeVersion": 1,
+      "position": [
+        704,
+        64
+      ],
+      "id": "a420a387-03a5-42e5-8e96-f37aaf75b43a",
+      "name": "ExecuteQuery graphDb",
+      "alwaysOutputData": true,
+      "credentials": {
+        "neo4jApi": {
+          "id": "CRXMYxLCHn3P13HV",
+          "name": "Neo4j account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        -32
+      ],
+      "id": "2b89df59-93c1-4485-a108-0c7026a677e5",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "content": "Consider adding more metadata like category",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        176,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "36affcd1-c8d0-4fee-a9a4-9b295d82031c",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query last 7 days incidents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query last 7 days incidents": {
+      "main": [
+        [
+          {
+            "node": "Prep for GraphDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep for GraphDB": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "ExecuteQuery graphDb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ExecuteQuery graphDb": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7108dcde-cb09-4cf3-a3c3-a5245afffccc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "RhPTPBH7MQNzoJne",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}
