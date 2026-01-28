@@ -119,6 +119,10 @@
             {
               "fieldId": "topic",
               "fieldValue": "={{ $json.topic }}"
+            },
+            {
+              "fieldId": "correlation_engine",
+              "fieldValue": "eda"
             }
           ]
         }
@@ -339,7 +343,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "f7a848f1-25f6-4482-9432-e605a73c7987",
+  "versionId": "5788c3b2-e241-41c1-b07f-c4e1170c8b5f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
