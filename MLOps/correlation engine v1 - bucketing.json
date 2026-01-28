@@ -1,0 +1,425 @@
+{
+  "name": "correlation engine v1 - bucketing",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        112,
+        16
+      ],
+      "id": "ac4c9208-fe8d-4492-8d7e-3636ff78e508",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_feeds",
+        "limit": 100,
+        "filterType": "string",
+        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 48 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        352,
+        16
+      ],
+      "id": "16ab64a1-370e-44ec-bfcd-1154f61a73d5",
+      "name": "Query candidate feeds",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Bucketing (topic + category + time)",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        576,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "11b70bb1-82da-43bf-bf57-b7505638321a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node — PROMOTE BUCKETS TO INCIDENTS (v0 FIX)\n\nconst output = [];\n\nfor (const item of items) {\n  const b = item.json;\n\n  const count = b.signals.length;\n\n  if (count >= 2) {\n    output.push({\n      json: {\n        incident_id: `${b.topic}__${b.category}__${b.window_start}`,\n        status: 'incident',\n        topic: b.topic,\n        category: b.category,\n        window_start: b.window_start,\n        window_end: b.window_end,\n        signal_count: count,\n        signals: b.signals,\n      }\n    });\n  }\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -176
+      ],
+      "id": "b7836e63-dabc-4e84-aa5c-c1ed98d88c8a",
+      "name": "Promotion to incidents",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "Detect incidents",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        816,
+        -256
+      ],
+      "typeVersion": 1,
+      "id": "db43ac2a-ec58-44c1-b5bc-cd8ea65bc246",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: items = feed rows from Supabase\n// Output: time-based buckets for LLM correlation (NO correlation here)\n\nconst feeds = items.map(i => i.json);\n\n// config\nconst WINDOW_HOURS = 8;\nconst MAX_SIGNALS_PER_BUCKET = 40;\n\nfunction floorToWindow(date, hours) {\n  const d = new Date(date);\n  const ms = hours * 60 * 60 * 1000;\n  return new Date(Math.floor(d.getTime() / ms) * ms);\n}\n\nconst buckets = new Map();\n\nfor (const f of feeds) {\n  const topic = f.topic ?? \"Other\";\n  const category = f.category ?? \"Other\";\n\n  const start = floorToWindow(f.inserted_at, WINDOW_HOURS);\n  const end = new Date(start.getTime() + WINDOW_HOURS * 60 * 60 * 1000);\n\n  const bucketKey = `${topic}__${category}__${start.toISOString()}`;\n\n  if (!buckets.has(bucketKey)) {\n    buckets.set(bucketKey, {\n      bucket_id: bucketKey,\n      topic,\n      category,\n      window_start: start.toISOString(),\n      window_end: end.toISOString(),\n      signals: [],\n    });\n  }\n\n  const b = buckets.get(bucketKey);\n\n  // Always pass real article content to the LLM\n  b.signals.push({\n    id: f.id,\n    title: f.title,\n    source: f.source,\n    date: f.date,\n    inserted_at: f.inserted_at,\n    content: f.content ?? f.summary ?? f.title ?? \"\",\n  });\n}\n\n// Cap bucket size to protect prompt length\nfor (const b of buckets.values()) {\n  if (b.signals.length > MAX_SIGNALS_PER_BUCKET) {\n    b.signals = b.signals.slice(b.signals.length - MAX_SIGNALS_PER_BUCKET);\n  }\n}\n\nreturn Array.from(buckets.values()).map(b => ({ json: b }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        16
+      ],
+      "id": "4862b55e-7b08-44b1-8ea3-0dc7b7e0a008",
+      "name": "Pre-group (bucketing)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(i => ({\n  json: {\n    topic: i.json.topic,\n    category: i.json.category,\n    signal_count: i.json.signals.length,\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        240
+      ],
+      "id": "3b2a4fe4-103a-4807-9849-4bce0280fc6b",
+      "name": "Debugger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        928,
+        32
+      ],
+      "id": "2e8f1231-5e11-47ed-8ddb-1653b84c45ac",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are given a bucket of news signals that occurred within the same time window.\n\nEach signal is an article with title, source, and content.\n\nYour task:\n- Decide which signals describe the same real-world incident\n- Produce one incident per real-world event\n- Include the ORIGINAL content so correlations are auditable\n\nInput signals:\n{{ JSON.stringify($json.signals) }}\n\nOutput format (STRICT):\n[\n  {\n    \"incident_id\": \"<stable id>\",\n    \"title\": \"<concise incident title>\",\n    \"summary\": [\n      \"<bullet 1>\",\n      \"<bullet 2>\"\n    ],\n    \"articles\": [\n      {\n        \"signal_id\": \"<id>\",\n        \"source\": \"<source>\",\n        \"title\": \"<title>\",\n        \"content\": \"<original content>\"\n      }\n    ],\n    \"confidence\": 0.0\n  }\n]",
+        "options": {
+          "systemMessage": "You are an incident correlation engine.\n\nYour job is to identify REAL-WORLD INCIDENTS, not themes or topics.\n\nDefinition:\n- An incident is ONE specific real-world event\n  (e.g. announcement, outage, breach, lawsuit, policy change).\n- An incident MUST be supported by at least TWO independent articles\n  describing the SAME event.\n\nRules (STRICT):\n- If there is NO single real-world event shared by at least two articles,\n  you MUST return an empty array [].\n- Do NOT cluster by theme, market sentiment, or general discussion.\n- Do NOT merge opinion pieces or analysis unless they reference the SAME trigger.\n- If unsure, return [].\n- Do NOT invent connections.\n\nYou MUST return:\n- [] if no incident exists\nOR\n- An array of incidents, each with:\n  - incident_id\n  - title\n  - summary (2–3 bullets)\n  - articles (>= 2, same event)\n  - confidence (0–1)\n\nReturn JSON only. No prose."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1264,
+        208
+      ],
+      "id": "c7707f43-40ff-4620-9cab-a26b2067f6ba",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        464
+      ],
+      "id": "dce4a1e8-884c-4533-a6e5-fd05dc97feaa",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"incident_id\": \"example_id\",\n  \"summary\": \"Example summary\",\n  \"links\": [\n    {\n      \"title\": \"Example title\",\n      \"source\": \"Hacker News\",\n      \"url\": null\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        480
+      ],
+      "id": "44f76171-dee0-43eb-a09c-d17b235e1069",
+      "name": "Structured Output Parser",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get raw LLM output\nconst raw = $json.output ?? $json;\n\n// 2. Parse JSON (handle fenced output)\nlet incidents;\nif (typeof raw === 'string') {\n  const cleaned = raw\n    .replace(/```json/g, '')\n    .replace(/```/g, '')\n    .trim();\n\n  incidents = JSON.parse(cleaned);\n} else {\n  incidents = raw;\n}\n\n// 3. HARD GATE: keep only real incidents (>= 2 articles)\nconst valid = (incidents || []).filter(i =>\n  Array.isArray(i.articles) && i.articles.length >= 2\n);\n\n// 4. Fan out\nreturn valid.map(i => ({ json: i }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        192
+      ],
+      "id": "c0c62c45-e4d8-4658-9343-8063217ed873",
+      "name": "Output formatter"
+    },
+    {
+      "parameters": {
+        "tableId": "status_watch_incidents",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "incident_id",
+              "fieldValue": "={{ $json.incident_id }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $json.summary }}"
+            },
+            {
+              "fieldId": "links",
+              "fieldValue": "={{ $json.articles }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2064,
+        176
+      ],
+      "id": "e3266b15-aa3c-458c-94fb-ade90c0884ae",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Consider RAG-ing so correlation can be against actual content (?)",
+        "height": 128,
+        "width": 182,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1232,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "e880d98b-328b-4905-ad99-5013ab8d617d",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "90bb48be-9aee-4016-a8ca-34559c0f7ab7",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "24bb346e-768a-4d68-8b48-6b10116c98ce",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1648,
+        208
+      ],
+      "id": "8c7d6cfe-d878-4c75-b9e1-688a28baebed",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query candidate feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query candidate feeds": {
+      "main": [
+        [
+          {
+            "node": "Pre-group (bucketing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-group (bucketing)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debugger": {
+      "main": [
+        []
+      ]
+    },
+    "Promotion to incidents": {
+      "main": [
+        []
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        []
+      ]
+    },
+    "Output formatter": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Output formatter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "8ae8df4a-034a-485e-b25c-9b6241d00e9c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "6IXwppHDiGxOiLRO",
+  "tags": []
+}

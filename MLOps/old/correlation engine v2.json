@@ -207,6 +207,21 @@
       "typeVersion": 1,
       "id": "b49238a8-7b77-4bba-9987-e7f84ae805a1",
       "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Add column for correlation engine version / approach",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2096,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "e27a4e7b-a996-4f41-9172-840fc5ea755e",
+      "name": "Sticky Note1"
     }
   ],
   "pinData": {},
@@ -324,7 +339,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "3f2dae67-ec50-4965-b5a4-f4a3a3807a28",
+  "versionId": "f7a848f1-25f6-4482-9432-e605a73c7987",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"

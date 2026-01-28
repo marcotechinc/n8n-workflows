@@ -1,0 +1,356 @@
+{
+  "name": "correlation engine v2 - EDA",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "8acbc0ed-7b19-4543-9284-0911d4d8a117",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_feeds",
+        "limit": 100,
+        "filterType": "string",
+        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "id": "3e5c0a1e-7779-4b33-8b8f-2dcef7cb53d2",
+      "name": "Query last 7 days feeds",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const groups = {};\n\nfor (const item of items) {\n  const topic = item.json.topic || 'UNKNOWN';\n\n  if (!groups[topic]) {\n    groups[topic] = [];\n  }\n\n  groups[topic].push({\n    id: item.json.id,\n    source: item.json.source,\n    title: item.json.title,\n    event_time: item.json.event_time || item.json.date\n  });\n}\n\nreturn Object.entries(groups).map(([topic, records]) => ({\n  json: {\n    topic,\n    records\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        0
+      ],
+      "id": "a7a1b8ff-59ef-46ec-b3c7-cca08c747a0f",
+      "name": "Group by topic"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        976,
+        0
+      ],
+      "id": "7388db97-210e-4760-892e-6a9499c4798c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        272
+      ],
+      "id": "f60c6d54-36ef-4f42-a73a-c0207fba0f30",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text;\n\nif (!raw) {\n  return [];\n}\n\nlet incidents;\ntry {\n  incidents = JSON.parse(raw);\n} catch (e) {\n  throw new Error('Invalid JSON from LLM');\n}\n\nif (!Array.isArray(incidents) || incidents.length === 0) {\n  return [];\n}\n\nreturn incidents.map(i => ({\n  json: {\n    incident_key: i.incident_key,\n    topic: i.topic,\n    title: i.incident_title,\n    summary: i.incident_summary,\n    signals: i.signals,\n    confidence: i.confidence\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1712,
+        96
+      ],
+      "id": "16975e73-02b2-4eb7-b8ff-681cef3e76d8",
+      "name": "Output formatter"
+    },
+    {
+      "parameters": {
+        "tableId": "status_watch_incidents",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "incident_id",
+              "fieldValue": "={{ $json.incident_key }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $json.summary }}"
+            },
+            {
+              "fieldId": "links",
+              "fieldValue": "={{ $json.signals }}"
+            },
+            {
+              "fieldId": "topic",
+              "fieldValue": "={{ $json.topic }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        256
+      ],
+      "id": "54b9887f-1d00-447e-b633-90b2c341a08e",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "90bb48be-9aee-4016-a8ca-34559c0f7ab7",
+              "leftValue": "={{ JSON.parse($json.text).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        224
+      ],
+      "id": "2135b262-2f4e-47ea-995d-b19403af6f9a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are given a set of news articles grouped by topic and time window.\n\nEach article has:\n- id\n- source\n- title\n- content\n- event_time\n\nTask:\n- Identify real-world incidents described by at least TWO articles.\n- Produce one object per incident.\n- Include ONLY articles describing the SAME incident.\n\nInput:\n{{ JSON.stringify($json.records) }}\n\nOutput format (STRICT JSON):\n[\n  {\n    \"incident_key\": \"<stable_key>\",\n    \"incident_title\": \"<concise title>\",\n    \"incident_summary\": [\n      \"<bullet 1>\",\n      \"<bullet 2>\"\n    ],\n    \"topic\": \"{{ $json.topic }}\",\n    \"signals\": [\n      {\n        \"id\": \"<id>\",\n        \"source\": \"<source>\",\n        \"title\": \"<title>\",\n        \"content\": \"<content>\",\n        \"event_time\": \"<event_time>\"\n      }\n    ],\n    \"confidence\": 0.0\n  }\n]\n\nIf no incidents are found, return [].",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an incident correlation engine.\n\nYour job is to identify REAL-WORLD INCIDENTS, not themes.\n\nDefinition:\n- An incident is ONE specific real-world event\n  (announcement, rollout, policy change, lawsuit, outage, enforcement action).\n- An incident MUST be supported by AT LEAST TWO DISTINCT SOURCES.\n\nSTRICT RULES:\n- You MUST verify at least two DIFFERENT sources per incident.\n- Do NOT cluster by topic, hype, sentiment, or general discussion.\n- Do NOT invent connections.\n- If unsure, return [].\n\nTOPIC HANDLING:\n- You MUST NOT invent or change the topic.\n- Use ONLY the provided topic value.\n- If an incident clearly spans domains, keep the topic unchanged\n  and add a short note explaining the cross-domain nature.\n\nOUTPUT RULE:\n- If no valid incident exists, return [].\n- Return JSON only. No prose."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [
+        1216,
+        80
+      ],
+      "id": "1f12c9cd-fd63-4dc2-b63e-ce8ce9a9ea20",
+      "name": "Look for correlations"
+    },
+    {
+      "parameters": {
+        "content": "Known \"issue\": LLM might create it's own topic that's not from the DB",
+        "height": 112,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1280,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "b49238a8-7b77-4bba-9987-e7f84ae805a1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Add column for correlation engine version / approach",
+        "height": 80,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2096,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "e27a4e7b-a996-4f41-9172-840fc5ea755e",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query last 7 days feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query last 7 days feeds": {
+      "main": [
+        [
+          {
+            "node": "Group by topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group by topic": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Look for correlations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Look for correlations",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output formatter": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Output formatter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look for correlations": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f7a848f1-25f6-4482-9432-e605a73c7987",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "t2XRHcQwzhY8ziOq",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}
