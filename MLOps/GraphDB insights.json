@@ -1,0 +1,224 @@
+{
+  "name": "GraphDB insights",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "5881d04f-bcd0-403b-8536-09431551bef6",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "graphDb",
+        "indexName": "",
+        "cypherQuery": "=MATCH (i:Incident)-[:CLUSTERED_BY]->(c:CorrelationEngine)\nMATCH (i)-[:HAS_TOPIC]->(t:Topic)\nMATCH (i)<-[:REPORTED]-(s:Source)\nMATCH (i)-[:OCCURRED_ON]->(d:Date)\nRETURN\n  i.incident_id AS incident_id,\n  d.date AS date,\n  t.name AS topic,\n  c.name AS correlation_engine,\n  collect(DISTINCT s.name) AS sources,\n  count(DISTINCT s) AS source_count\nORDER BY date DESC;"
+      },
+      "type": "n8n-nodes-neo4j.neo4j",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -32
+      ],
+      "id": "5e9875f6-c31b-4d80-986b-523fe78c2bc0",
+      "name": "Graph Insight Query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "neo4jApi": {
+          "id": "CRXMYxLCHn3P13HV",
+          "name": "Neo4j account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "ac0b4361-4a80-4d3d-99fa-bb291f7a4690",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        352
+      ],
+      "id": "e9dbe5ad-1f7a-423b-bad4-54ce66b8fd9e",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are analyzing correlated incidents for operational decision-making.\n\nFrom the data below:\n1. Identify the 3–5 incidents that deserve attention.\n2. For each, explain *why it matters* in one sentence.\n3. Suggest a concrete follow-up action for each (monitor, investigate, ignore, escalate).\n4. Explicitly call out what can be safely ignored for now.\n\nBe practical. Be decisive. Avoid summaries.\n\nInput data:\n{{ JSON.stringify($input.all().map(i => i.json), null, 2) }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an analytical intelligence assistant. Your job is to extract patterns, signal strength, and notable insights from pre-correlated incident data. Do not invent facts. Do not speculate beyond the provided data. Prioritize signal over completeness."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        784,
+        -192
+      ],
+      "id": "41b3bf3a-8aaf-4984-a81e-b96d09e88085",
+      "name": "What I should do?",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are given a list of incidents already correlated by EDA or DBSCAN.\n\nTasks:\n1. Identify dominant themes.\n2. Highlight high-confidence signals (based on source count/diversity).\n3. Call out reinforcing or repeated stories.\n4. Note any unusual patterns.\n5. Produce a concise executive summary (max 6 bullets).\n\nInput data:\n{{ JSON.stringify($input.all().map(i => i.json), null, 2) }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an analytical intelligence assistant. Your job is to extract patterns, signal strength, and notable insights from pre-correlated incident data. Do not invent facts. Do not speculate beyond the provided data. Prioritize signal over completeness."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        784,
+        144
+      ],
+      "id": "9fcebe9c-bfdc-4f3a-97db-b8ec7ccf31a9",
+      "name": "Executive-type Summary"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge all incoming items into a single payload for the LLM\n\nconst incidents = items.map(item => item.json);\n\nreturn [\n  {\n    json: {\n      incidents,\n      incident_count: incidents.length\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -32
+      ],
+      "id": "43ac3f4a-b1be-445e-b4e9-be56910ef1cc",
+      "name": "Collapse items"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Graph Insight Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Graph Insight Query": {
+      "main": [
+        [
+          {
+            "node": "Collapse items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "What I should do?",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Executive-type Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collapse items": {
+      "main": [
+        [
+          {
+            "node": "Executive-type Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "c532923c-5f55-4d0a-b3e6-b7155fcfddb6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "m5LRpNcD30MjsOEQ",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}

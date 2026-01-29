@@ -7,7 +7,7 @@
       "typeVersion": 1,
       "position": [
         -512,
-        320
+        -176
       ],
       "id": "8e91c89e-59c1-489a-a3a4-d004b5aa450a",
       "name": "When clicking ‘Execute workflow’"
@@ -164,11 +164,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
-        656
+        -16,
+        848
       ],
       "id": "216d305d-06ce-4442-8dd9-5fed5cabfa4f",
-      "name": "Hacker News: Top Stories API"
+      "name": "Hacker News: Top Stories API",
+      "disabled": true
     },
     {
       "parameters": {
@@ -178,11 +179,12 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        192,
-        656
+        176,
+        848
       ],
       "id": "83c279fd-df73-452f-b6fb-d354f914eb92",
-      "name": "Hacker News: Loop Over Stories"
+      "name": "Hacker News: Loop Over Stories",
+      "disabled": true
     },
     {
       "parameters": {
@@ -198,11 +200,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        416,
-        768
+        400,
+        960
       ],
       "id": "6be490c2-0ac1-4d6c-bd37-305ba7af16e6",
-      "name": "HackerNews: Fetch Story Details"
+      "name": "HackerNews: Fetch Story Details",
+      "disabled": true
     },
     {
       "parameters": {
@@ -211,11 +214,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        608,
-        768
+        592,
+        960
       ],
       "id": "199c5af7-a262-415a-83e0-5c03659713cf",
-      "name": "Hacker News: Normalize Feed"
+      "name": "Hacker News: Normalize Feed",
+      "disabled": true
     },
     {
       "parameters": {
@@ -337,7 +341,7 @@
       "typeVersion": 1.2,
       "position": [
         768,
-        16
+        -496
       ],
       "id": "b4a97b08-c183-445d-a6a6-dc6be859c3cb",
       "name": "OpenAI Chat Model",
@@ -356,7 +360,7 @@
       "typeVersion": 1.3,
       "position": [
         928,
-        32
+        -480
       ],
       "id": "2e83586c-a65d-426b-a4e8-fec78dff9e50",
       "name": "Structured Output Parser"
@@ -378,11 +382,13 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.7,
       "position": [
-        800,
-        768
+        784,
+        960
       ],
       "id": "3528ecb2-34a5-4365-b974-3cf34f73b3a4",
-      "name": "Enrich Signal II"
+      "name": "Enrich Signal II",
+      "disabled": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -399,7 +405,7 @@
       "typeVersion": 4.2,
       "position": [
         16,
-        -208
+        -880
       ],
       "id": "405af5fd-cabf-44f9-b95d-302aa0e1bd9a",
       "name": "Yahoo Tech: Fetch RSS"
@@ -412,7 +418,7 @@
       "typeVersion": 1,
       "position": [
         240,
-        -208
+        -880
       ],
       "id": "d4590236-1f09-4f58-874a-828c6e699977",
       "name": "Yahoo Tech: Convert to XML"
@@ -425,7 +431,7 @@
       "typeVersion": 2,
       "position": [
         448,
-        -208
+        -880
       ],
       "id": "0c12dd93-7af3-47e1-8ac4-94a9bc469e17",
       "name": "Yahoo Tech: Normalize Feed"
@@ -469,8 +475,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1408,
-        16
+        1536,
+        -176
       ],
       "id": "8bc45138-86e4-42f9-8cb8-cb761ea2d2cb",
       "name": "Insert feed into DB_RSS",
@@ -479,7 +485,8 @@
           "id": "k6NMY19byioyMjUc",
           "name": "Supabase - Reset"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -499,10 +506,11 @@
       "typeVersion": 1.7,
       "position": [
         768,
-        -208
+        -880
       ],
       "id": "fb6430b8-9590-4fca-a674-bb4085c3a881",
-      "name": "Enrich Signal_Yahoo"
+      "name": "Enrich Signal_Yahoo",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -516,8 +524,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        768,
-        560
+        736,
+        736
       ],
       "id": "16048876-08c8-45f3-aadc-b6d0f5bee82b",
       "name": "OpenAI Chat Model_HN",
@@ -526,7 +534,8 @@
           "id": "KRyyaKtkymLK3YpM",
           "name": "OpenAi account"
         }
-      }
+      },
+      "disabled": true
     },
     {
       "parameters": {
@@ -535,11 +544,12 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        1008,
-        576
+        976,
+        752
       ],
       "id": "4f8ac264-8cb0-4ee6-ad5e-390ec6aab03d",
-      "name": "Structured Output Parser_HN"
+      "name": "Structured Output Parser_HN",
+      "disabled": true
     },
     {
       "parameters": {
@@ -559,10 +569,11 @@
       "typeVersion": 1.7,
       "position": [
         784,
-        208
+        -96
       ],
       "id": "f9917a09-4fe1-4dd7-8ca3-6564fe9c13e7",
-      "name": "Enrich Signal_RSS"
+      "name": "Enrich Signal_RSS",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -600,7 +611,7 @@
       "typeVersion": 4.3,
       "position": [
         1408,
-        -192
+        -640
       ],
       "id": "e3d4973d-87c4-420f-98f6-8666b90f7f7b",
       "name": "Tone Model - RSS",
@@ -671,8 +682,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1184,
-        -32
+        1280,
+        -160
       ],
       "id": "79eb8c50-129a-4779-b82d-36eca94c7c3c",
       "name": "Flatten LLM Output - RSS"
@@ -736,11 +747,12 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1168,
-        768
+        1152,
+        960
       ],
       "id": "e0236c4f-39b1-49dd-90c9-ebb506dfc83f",
-      "name": "Flatten LLM Output - HN"
+      "name": "Flatten LLM Output - HN",
+      "disabled": true
     },
     {
       "parameters": {
@@ -769,8 +781,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1376,
-        624
+        1360,
+        816
       ],
       "id": "a43b2c1a-4e5a-475f-9c1e-c87771d118b4",
       "name": "Tone Model - HN",
@@ -815,8 +827,8 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        1392,
-        800
+        1376,
+        992
       ],
       "id": "3f64983b-2d85-43a7-a338-485070f84525",
       "name": "Insert feed into DB_HN",
@@ -825,7 +837,162 @@
           "id": "k6NMY19byioyMjUc",
           "name": "Supabase - Reset"
         }
-      }
+      },
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://www.bleepingcomputer.com/feed/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        -176
+      ],
+      "id": "144da536-4058-4b51-922e-a94423ff5973",
+      "name": "BleepingComputer: Fetch RSS1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -176
+      ],
+      "id": "a889b85e-85a7-4661-8498-c2a32e7dab32",
+      "name": "BleepingComputer: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\n\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    url: entry.link,\n    date: entry.pubDate,\n    source: \"BleepingComputer\",\n    content: entry.description,\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -176
+      ],
+      "id": "f1028e82-990b-4706-9e60-60c3cfad0e81",
+      "name": "BleepingComputer: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.arstechnica.com/arstechnica/index",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        -352
+      ],
+      "id": "c802d40b-14f5-4ec7-91b6-2be3081c69c8",
+      "name": "Ars Technica: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -352
+      ],
+      "id": "05b84eac-ac87-47bf-8216-8261ecba617a",
+      "name": "Ars Technica: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $json[\"rss\"][\"channel\"][\"item\"];\n\nreturn items.map(entry => ({\n  json: {\n    title: entry.title,\n    url: entry.link,\n    date: entry.pubDate,\n    source: \"Ars Technica\",\n    content: entry.description,\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        -352
+      ],
+      "id": "6de67194-45d2-4c5e-8fdb-12b6e35089d3",
+      "name": "Ars Technica: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://www.theverge.com/rss/index.xml",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        -592
+      ],
+      "id": "4e632d5f-652d-4f16-ac0c-a5b3d0bf3053",
+      "name": "The Verge: Fetch RSS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -592
+      ],
+      "id": "c04d51d2-179c-412a-926e-a0cd6480dc75",
+      "name": "The Verge: Convert to XML"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Atom feed normalization for The Verge\n\nconst entries = $json.feed?.entry || [];\n\nreturn entries.map(entry => ({\n  json: {\n    title: entry.title?._ || null,\n    url: entry.link?.href || null,\n    date: entry.published || entry.updated || null,\n    source: \"The Verge\",\n    content:\n      entry.summary?._ ||\n      entry.content?._ ||\n      entry.title?._ ||\n      null\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -592
+      ],
+      "id": "049bc981-fb7d-423e-8958-ecc9a570ec4e",
+      "name": "The Verge: Normalize Feed"
+    },
+    {
+      "parameters": {
+        "content": "Leave deactivated for now - HackerNews feeds ingestion",
+        "height": 560,
+        "width": 1712
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "930abb2b-3b0c-4a2d-901f-21e503ded77d",
+      "name": "Sticky Note1"
     }
   ],
   "pinData": {},
@@ -833,11 +1000,6 @@
     "When clicking ‘Execute workflow’": {
       "main": [
         [
-          {
-            "node": "Hacker News: Top Stories API",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "TechCrunch: Fetch RSS",
             "type": "main",
@@ -855,6 +1017,21 @@
           },
           {
             "node": "Yahoo Tech: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BleepingComputer: Fetch RSS1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Ars Technica: Fetch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "The Verge: Fetch RSS",
             "type": "main",
             "index": 0
           }
@@ -1172,6 +1349,105 @@
           }
         ]
       ]
+    },
+    "BleepingComputer: Fetch RSS1": {
+      "main": [
+        [
+          {
+            "node": "BleepingComputer: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BleepingComputer: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "BleepingComputer: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BleepingComputer: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ars Technica: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "Ars Technica: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ars Technica: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "Ars Technica: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ars Technica: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Verge: Fetch RSS": {
+      "main": [
+        [
+          {
+            "node": "The Verge: Convert to XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Verge: Convert to XML": {
+      "main": [
+        [
+          {
+            "node": "The Verge: Normalize Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Verge: Normalize Feed": {
+      "main": [
+        [
+          {
+            "node": "Enrich Signal_RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -1179,7 +1455,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "d3513958-57c4-4375-8b0c-8b91ae5bf67a",
+  "versionId": "85b84c26-d4b1-4e1b-82c8-1950a4e80b32",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"

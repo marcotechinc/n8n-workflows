@@ -14,29 +14,6 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "status_watch_incidents",
-        "limit": 500,
-        "filterType": "string",
-        "filterString": "=created_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&order=created_at.asc&select=id,incident_id,topic,summary,links,correlation_engine,created_at"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        16,
-        -32
-      ],
-      "id": "f4095955-6ae5-4161-b7a6-03b8359a78a3",
-      "name": "Query last 7 days incidents",
-      "credentials": {
-        "supabaseApi": {
-          "id": "k6NMY19byioyMjUc",
-          "name": "Supabase - Reset"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "// n8n Function node\n// Output ONLY Incident rows (1 per incident), graph-ready\n\nconst out = [];\n\nfor (const i of items.map(x => x.json)) {\n\n  const links = Array.isArray(i.links) ? i.links : [];\n\n  // derive event_time = earliest signal time\n  const eventTimes = links\n    .map(l => Date.parse(l.event_time))\n    .filter(t => !isNaN(t));\n\n  const eventTime =\n    eventTimes.length > 0 ? new Date(Math.min(...eventTimes)) : null;\n\n  const sources = [...new Set(links.map(l => l.source).filter(Boolean))];\n\n  out.push({\n    json: {\n      incident_id: i.incident_id,\n      topic: i.topic,\n\n      // normalize summary\n      summary: typeof i.summary === \"string\"\n        ? JSON.parse(i.summary)\n        : i.summary,\n\n      sources,                       // [\"Bloomberg\", \"FT\", ...]\n      event_time: eventTime ? eventTime.toISOString() : null,\n      event_date: eventTime ? eventTime.toISOString().slice(0, 10) : null,\n      event_year: eventTime ? eventTime.getUTCFullYear() : null,\n      event_month: eventTime ? eventTime.getUTCMonth() + 1 : null,\n\n      correlation_engine: i.correlation_engine,\n      created_at: i.created_at\n    }\n  });\n}\n\nreturn out;\n"
       },
       "type": "n8n-nodes-base.code",
@@ -52,7 +29,7 @@
       "parameters": {
         "resource": "graphDb",
         "indexName": "",
-        "cypherQuery": "=MERGE (i:Incident { incident_id: \"{{ $json.incident_id }}\" })\nSET\n  i.summary = {{ JSON.stringify($json.summary) }},\n  i.created_at = datetime(\"{{ $json.created_at }}\"),\n  i.event_time = datetime(\"{{ $json.event_time }}\")\n\nWITH i\n\nMERGE (t:Topic { name: \"{{ $json.topic }}\" })\nMERGE (i)-[:HAS_TOPIC]->(t)\n\nWITH i, t\n\nMERGE (c:CorrelationEngine { name: \"{{ $json.correlation_engine }}\" })\nMERGE (i)-[:CLUSTERED_BY]->(c)\n\nWITH i, t\n\nUNWIND {{ JSON.stringify($json.sources) }} AS src\nMERGE (s:Source { name: src })\nMERGE (s)-[:REPORTED]->(i)\nMERGE (s)-[:REPORTED_ON_TOPIC]->(t)"
+        "cypherQuery": "=MERGE (i:Incident { incident_id: \"{{ $json.incident_id }}\" })\nSET\n  i.created_at = datetime(\"{{ $json.created_at }}\"),\n  i.event_time  = datetime(\"{{ $json.event_time }}\")\n\nWITH i\n\nMERGE (d:Domain { name: \"{{ $json.topic }}\" })\nMERGE (i)-[:IN_DOMAIN]->(d)\n\nMERGE (t:Topic { name: \"{{ $json.topic }}\" })\nMERGE (i)-[:HAS_TOPIC]->(t)\n\nWITH i, t\n\nMERGE (c:CorrelationEngine { name: \"{{ $json.correlation_engine }}\" })\nSET c.last_run = datetime()\nMERGE (i)-[:CLUSTERED_BY]->(c)\n\nWITH i, t\n\nMERGE (date:Date { date: date(\"{{ $json.event_date }}\") })\nMERGE (i)-[:OCCURRED_ON]->(date)\n\nWITH i, t\n\nUNWIND {{ JSON.stringify($json.sources) }} AS src\nMERGE (s:Source { name: src })\nMERGE (s)-[r:REPORTED]->(i)\nSET r.weight = 1\nMERGE (s)-[:REPORTED_ON_TOPIC]->(t)\n\nWITH i\n\nUNWIND {{ JSON.stringify($json.summary) }} AS line\nMERGE (sum:Summary { text: line })\nMERGE (i)-[:HAS_SUMMARY]->(sum)"
       },
       "type": "n8n-nodes-neo4j.neo4j",
       "typeVersion": 1,
@@ -85,18 +62,26 @@
     },
     {
       "parameters": {
-        "content": "Consider adding more metadata like category",
-        "height": 80,
-        "width": 176
+        "operation": "getAll",
+        "tableId": "status_watch_incidents",
+        "limit": 500,
+        "filterType": "string",
+        "filterString": "=created_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&order=created_at.asc&select=id,incident_id,topic,summary,links,correlation_engine,created_at"
       },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        176,
-        -176
-      ],
+      "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "id": "36affcd1-c8d0-4fee-a9a4-9b295d82031c",
-      "name": "Sticky Note"
+      "position": [
+        16,
+        -32
+      ],
+      "id": "f4095955-6ae5-4161-b7a6-03b8359a78a3",
+      "name": "Query incidents",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -105,18 +90,7 @@
       "main": [
         [
           {
-            "node": "Query last 7 days incidents",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Query last 7 days incidents": {
-      "main": [
-        [
-          {
-            "node": "Prep for GraphDB",
+            "node": "Query incidents",
             "type": "main",
             "index": 0
           }
@@ -156,6 +130,17 @@
           }
         ]
       ]
+    },
+    "Query incidents": {
+      "main": [
+        [
+          {
+            "node": "Prep for GraphDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -163,7 +148,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "7108dcde-cb09-4cf3-a3c3-a5245afffccc",
+  "versionId": "477bb94e-ab05-499a-85f1-0f20e058066d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"

@@ -14,29 +14,6 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "status_watch_feeds",
-        "limit": 100,
-        "filterType": "string",
-        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        112,
-        0
-      ],
-      "id": "96a2d426-19fc-4a18-9161-54d7219e1fde",
-      "name": "Query last 7 days feeds",
-      "credentials": {
-        "supabaseApi": {
-          "id": "k6NMY19byioyMjUc",
-          "name": "Supabase - Reset"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "return items.map(item => {\n  const title = (item.json.title ?? '').trim();\n  const content = (item.json.content ?? '').trim();\n\n  return {\n    json: {\n      pageContent: `${title}\\n\\n${content}`.replace(/\\s+/g, ' ').trim(),\n      metadata: {\n        feed_id: item.json.id,\n        title,\n        source: item.json.source,\n        date: item.json.date,\n        topic: item.json.topic,\n        category: item.json.category,\n        tone_llm: item.json.tone_llm\n      }\n    }\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
@@ -133,6 +110,10 @@
               {
                 "name": "tone",
                 "value": "={{ $json.metadata.tone_llm }}"
+              },
+              {
+                "name": "title",
+                "value": "={{ $json.metadata.title }}"
               }
             ]
           }
@@ -146,6 +127,44 @@
       ],
       "id": "39ee1346-5ac6-4a95-ae1c-e70bc1671ee5",
       "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "content": "Check to make sure not too big before running",
+        "height": 304,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "30953952-88e2-4de5-8061-73f1c958c96c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_feeds",
+        "limit": 500,
+        "filterType": "string",
+        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 336 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        112,
+        0
+      ],
+      "id": "96a2d426-19fc-4a18-9161-54d7219e1fde",
+      "name": "Query embeddings feeds",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -154,18 +173,7 @@
       "main": [
         [
           {
-            "node": "Query last 7 days feeds",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Query last 7 days feeds": {
-      "main": [
-        [
-          {
-            "node": "Prep for embedding",
+            "node": "Query embeddings feeds",
             "type": "main",
             "index": 0
           }
@@ -209,6 +217,17 @@
           }
         ]
       ]
+    },
+    "Query embeddings feeds": {
+      "main": [
+        [
+          {
+            "node": "Prep for embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -216,7 +235,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "3b6faf3e-a250-4f8d-83c8-249c4c32af41",
+  "versionId": "8c0d5b79-7d09-4ef9-9a43-37c9422d058f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
