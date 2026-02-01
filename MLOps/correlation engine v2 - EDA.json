@@ -14,29 +14,6 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "status_watch_feeds",
-        "limit": 100,
-        "filterType": "string",
-        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        480,
-        0
-      ],
-      "id": "3e5c0a1e-7779-4b33-8b8f-2dcef7cb53d2",
-      "name": "Query last 7 days feeds",
-      "credentials": {
-        "supabaseApi": {
-          "id": "k6NMY19byioyMjUc",
-          "name": "Supabase - Reset"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const groups = {};\n\nfor (const item of items) {\n  const topic = item.json.topic || 'UNKNOWN';\n\n  if (!groups[topic]) {\n    groups[topic] = [];\n  }\n\n  groups[topic].push({\n    id: item.json.id,\n    source: item.json.source,\n    title: item.json.title,\n    event_time: item.json.event_time || item.json.date\n  });\n}\n\nreturn Object.entries(groups).map(([topic, records]) => ({\n  json: {\n    topic,\n    records\n  }\n}));"
       },
       "type": "n8n-nodes-base.code",
@@ -199,6 +176,21 @@
     },
     {
       "parameters": {
+        "content": "Should we add category to table?",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2080,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "e8362f35-c80d-47f9-9e47-8cf88c676398",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
         "content": "Known \"issue\": LLM might create it's own topic that's not from the DB",
         "height": 112,
         "width": 192
@@ -206,7 +198,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "position": [
         1280,
-        -80
+        -48
       ],
       "typeVersion": 1,
       "id": "b49238a8-7b77-4bba-9987-e7f84ae805a1",
@@ -214,18 +206,26 @@
     },
     {
       "parameters": {
-        "content": "Add column for correlation engine version / approach",
-        "height": 80,
-        "width": 150
+        "operation": "getAll",
+        "tableId": "status_watch_feeds",
+        "limit": 100,
+        "filterType": "string",
+        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&category=is.not_null&topic=is.not_null&content=is.not_null&source=not.eq.Hacker%20News&order=inserted_at.asc"
       },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        2096,
-        144
-      ],
+      "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "id": "e27a4e7b-a996-4f41-9172-840fc5ea755e",
-      "name": "Sticky Note1"
+      "position": [
+        480,
+        0
+      ],
+      "id": "3e5c0a1e-7779-4b33-8b8f-2dcef7cb53d2",
+      "name": "Query feeds",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -234,18 +234,7 @@
       "main": [
         [
           {
-            "node": "Query last 7 days feeds",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Query last 7 days feeds": {
-      "main": [
-        [
-          {
-            "node": "Group by topic",
+            "node": "Query feeds",
             "type": "main",
             "index": 0
           }
@@ -336,6 +325,17 @@
           }
         ]
       ]
+    },
+    "Query feeds": {
+      "main": [
+        [
+          {
+            "node": "Group by topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -343,7 +343,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "5788c3b2-e241-41c1-b07f-c4e1170c8b5f",
+  "versionId": "b3a57d86-6a5c-461d-a116-5ba911952dfe",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"

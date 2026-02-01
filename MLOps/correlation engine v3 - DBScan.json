@@ -14,29 +14,6 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "tableId": "status_watch_feed_embeddings",
-        "limit": 500,
-        "filterType": "string",
-        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 336 }).toISO() }}&content=is.not_null&embedding=is.not_null&order=inserted_at.asc&select=id,embedding,metadata,content"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        128,
-        0
-      ],
-      "id": "019218bc-cd44-4e37-beb2-e9aacf5ef3ff",
-      "name": "Query last 7 days embeddings",
-      "credentials": {
-        "supabaseApi": {
-          "id": "k6NMY19byioyMjUc",
-          "name": "Supabase - Reset"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const payload = {\n  items: items.map(item => ({\n    id: String(item.json.id), // use REAL Supabase row id\n    embedding: Array.isArray(item.json.embedding)\n      ? item.json.embedding\n      : JSON.parse(item.json.embedding)\n  })),\n  eps: 0.7,\n  min_samples: 3\n};\n\nreturn [{ json: payload }];\n"
       },
       "type": "n8n-nodes-base.code",
@@ -308,6 +285,44 @@
           "name": "Supabase - Reset"
         }
       }
+    },
+    {
+      "parameters": {
+        "content": "Should we add category to table?",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2368,
+        96
+      ],
+      "typeVersion": 1,
+      "id": "347aa607-3ba2-47f1-8d99-fc008373f6df",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_feed_embeddings",
+        "limit": 100,
+        "filterType": "string",
+        "filterString": "=inserted_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&content=is.not_null&embedding=is.not_null&order=inserted_at.asc&select=id,embedding,metadata,content"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        128,
+        0
+      ],
+      "id": "019218bc-cd44-4e37-beb2-e9aacf5ef3ff",
+      "name": "Query embeddings",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -316,18 +331,7 @@
       "main": [
         [
           {
-            "node": "Query last 7 days embeddings",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Query last 7 days embeddings": {
-      "main": [
-        [
-          {
-            "node": "Parse embeddings",
+            "node": "Query embeddings",
             "type": "main",
             "index": 0
           }
@@ -455,6 +459,17 @@
           }
         ]
       ]
+    },
+    "Query embeddings": {
+      "main": [
+        [
+          {
+            "node": "Parse embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -462,7 +477,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "9ce424ad-aa10-4cc8-81a4-f4f0afd2270c",
+  "versionId": "4fc98c95-8798-49f0-859d-ab6b5b733f2d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"

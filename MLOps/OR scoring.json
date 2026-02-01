@@ -1,0 +1,241 @@
+{
+  "name": "OR scoring",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "769d57f4-b524-4d41-abff-c7358d6f1d24",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_incidents",
+        "limit": 100,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "source_count",
+              "condition": "is",
+              "keyValue": "null"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        176,
+        0
+      ],
+      "id": "5ffba3f4-d7f9-40a9-ae4a-65e7020fa90d",
+      "name": "Query incidents where score is null",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Below are reference examples showing how features should be extracted.\nUse them to calibrate your outputs.\nThen extract features for the new incident.\n\nDo NOT infer importance beyond what is specified.\nDo NOT collapse features into a single score.\nBe consistent with the examples.\n\n---\n\n### REFERENCE EXAMPLES\n\nExample A:\nIncident: Never-before-seen Linux malware targeting cloud servers\nTopic: Cybersecurity\nCorrelation engine: dbscan\nLinks: 3 distinct sources\nRegulatory action: No\n\nOutput:\n{\n  \"source_count\": 3,\n  \"topic_weight\": 1.0,\n  \"engine_weight\": 1.0,\n  \"story_size\": 3,\n  \"cross_topic_flag\": false,\n  \"regulatory_flag\": false\n}\n\n---\n\nExample B:\nIncident: EU launches formal investigation into xAI over sexualized deepfakes\nTopic: AI\nCorrelation engine: eda\nLinks: 5 distinct sources\nRegulatory action: Yes (EU investigation)\n\nOutput:\n{\n  \"source_count\": 5,\n  \"topic_weight\": 0.9,\n  \"engine_weight\": 0.7,\n  \"story_size\": 5,\n  \"cross_topic_flag\": true,\n  \"regulatory_flag\": true\n}\n\n---\n\nExample C:\nIncident: Nvidia invests $2B in CoreWeave\nTopic: AI\nCorrelation engine: eda\nLinks: 4 distinct sources\nRegulatory action: No\n\nOutput:\n{\n  \"source_count\": 4,\n  \"topic_weight\": 0.9,\n  \"engine_weight\": 0.7,\n  \"story_size\": 4,\n  \"cross_topic_flag\": false,\n  \"regulatory_flag\": false\n}\n\n---\n\nExample D:\nIncident: Microsoft shares workaround for Outlook freezes\nTopic: Big Tech\nCorrelation engine: eda\nLinks: 2 distinct sources\nRegulatory action: No\n\nOutput:\n{\n  \"source_count\": 2,\n  \"topic_weight\": 0.8,\n  \"engine_weight\": 0.7,\n  \"story_size\": 2,\n  \"cross_topic_flag\": false,\n  \"regulatory_flag\": false\n}\n\n---\n\n### INCIDENT TO PROCESS\n\nincident_id:\n{{ $json.id }}\n\nsummary:\n{{ $json.summary }}\n\nlinks:\n{{ $json.links }}\n\ntopic:\n{{ $json.topic }}\n\ncorrelation_engine:\n{{ $json.correlation_engine }}\n\n---\n\nTopic weight guidance:\n- Cybersecurity → 1.0\n- AI → 0.9\n- Big Tech → 0.8\n- Blockchain → 0.6\n- Other → 0.4\n\nEngine weight guidance:\n- dbscan → 1.0\n- eda → 0.7\n\n---\n\nReturn JSON exactly in this format:\n\n{\n  \"incident_id\": \"<same incident_id>\",\n  \"source_count\": <int>,\n  \"topic_weight\": <float>,\n  \"engine_weight\": <float>,\n  \"story_size\": <int>,\n  \"cross_topic_flag\": <true|false>,\n  \"regulatory_flag\": <true|false>\n}\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are extracting structured features for downstream optimization.\n\nYour job is NOT to decide importance or priority.\nYour job is to describe the incident using objective, explainable signals.\n\nRules:\n- Do NOT collapse signals into a single score.\n- Do NOT apply policy or personal judgment.\n- Use the incident content only.\n- Be consistent across incidents.\n- If unsure, choose the conservative / lower value.\n\nThese features will later be used by an optimization (OR) layer."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.8,
+      "position": [
+        464,
+        0
+      ],
+      "id": "5bb314bd-5848-4206-915b-73b476403ba4",
+      "name": "Scorer"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        208
+      ],
+      "id": "da7c38ee-ac1e-4aa5-8a39-d2382a61d119",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "status_watch_incidents",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.incident_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "source_count",
+              "fieldValue": "={{ $json.source_count }}"
+            },
+            {
+              "fieldId": "story_size",
+              "fieldValue": "={{ $json.story_size }}"
+            },
+            {
+              "fieldId": "topic_weight",
+              "fieldValue": "={{ $json.topic_weight }}"
+            },
+            {
+              "fieldId": "engine_weight",
+              "fieldValue": "={{ $json.engine_weight }}"
+            },
+            {
+              "fieldId": "cross_topic_flag",
+              "fieldValue": "={{ $json.cross_topic_flag }}"
+            },
+            {
+              "fieldId": "regulatory_flag",
+              "fieldValue": "={{ $json.regulatory_flag }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        0
+      ],
+      "id": "89281ece-e319-4f3d-abe1-5d7696cef6a3",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const parsed = JSON.parse(item.json.text);\n\n  return {\n    json: {\n      incident_id: parsed.incident_id,\n      source_count: parsed.source_count,\n      topic_weight: parsed.topic_weight,\n      engine_weight: parsed.engine_weight,\n      story_size: parsed.story_size,\n      cross_topic_flag: parsed.cross_topic_flag,\n      regulatory_flag: parsed.regulatory_flag\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        0
+      ],
+      "id": "9719a4e4-9fde-4ff0-8bc7-49314d8ba7cb",
+      "name": "Prep for insert"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query incidents where score is null",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query incidents where score is null": {
+      "main": [
+        [
+          {
+            "node": "Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Scorer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scorer": {
+      "main": [
+        [
+          {
+            "node": "Prep for insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep for insert": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "c1f7e9a8-f439-4c5b-920f-0e593c8182b1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "sW6ZN0jeWyhTsV1J",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}
