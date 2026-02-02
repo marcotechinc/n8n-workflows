@@ -1,0 +1,212 @@
+{
+  "name": "OR engine",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "572a00a3-7eda-4d20-9269-bc78a6437554",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        176
+      ],
+      "id": "9ec57d3f-c8d8-4e6c-b976-5002e2fb7184",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "KRyyaKtkymLK3YpM",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=The following incidents were selected by an optimization engine.\n\nContext:\n- The system operates under limited attention and bandwidth.\n- Selection favors incidents with the highest potential for risk,\n  leverage, and downstream impact.\n- Decisions are comparative within the provided set.\n\nExplain the outcome using a high-level executive / deal-maker lens.\n\nRules:\n- Refer to each incident by its incident_id.\n- Do NOT mention math, scores, weights, or formulas.\n- Do NOT invent criteria beyond what is implied by the context.\n- Do NOT use labels like “Incident 1” or “the first incident”.\n\n---\n\nSELECTED INCIDENTS:\n{{ JSON.stringify($json.selected, null, 2) }}\n\n---\n\nOutput format (use this structure exactly):\n\nTitle:\nExecutive decision summary\n\nSection 1:\nA short paragraph (2–3 sentences) explaining why THIS SET of incidents\nrepresents where attention should be focused now.\n\nSection 2:\nBullet points, one per incident, in this exact format:\n\n- <incident_id>: <one concise sentence explaining why this matters from a risk / leverage / impact perspective>",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are explaining decisions made by a deterministic optimization engine\nfrom the perspective of a senior decision-maker.\n\nYou do NOT make decisions.\nYou do NOT rescore or reorder items.\nYou do NOT invent new criteria.\n\nYour role is to frame the outcome in terms of:\n- risk\n- leverage\n- downstream impact\n- second-order consequences\n\nUse clear, confident, executive-style language.\nAvoid filler, hype, or academic tone.\nNever refer to items as “Incident 1”, “Incident A”, etc.\nAlways refer to items by their incident_id."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        688,
+        -32
+      ],
+      "id": "babed6da-e988-41b9-9ede-27b4e2ea104b",
+      "name": "Executive-type Summary"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "status_watch_incidents",
+        "limit": 100,
+        "filterType": "string",
+        "filterString": "=created_at=gte.{{ $now.minus({ hours: 336 }).toISO() }}&source_count=not.is.null&order=created_at.desc"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        48,
+        -32
+      ],
+      "id": "43a3b405-3696-446d-8afa-5bdf821ece08",
+      "name": "Query incidents where scores are not null",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const orItems = items.map(i => {\n  return {\n    incident_id: i.json.incident_id,\n    topic_weight: i.json.topic_weight,\n    engine_weight: i.json.engine_weight,\n    source_count: i.json.source_count,\n    story_size: i.json.story_size\n  };\n});\n\n// Return ONE item to send to the OR API\nreturn [\n  {\n    json: {\n      max_items: 5,\n      items: orItems\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -32
+      ],
+      "id": "b7058133-d1a1-42e9-b383-82cd4e117d38",
+      "name": "Prep for OR API"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://or-api-production.up.railway.app/select",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "or-dev-key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        464,
+        -32
+      ],
+      "id": "ad354147-bebe-4704-9ab5-eefbafca3ea6",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Query incidents where scores are not null",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Executive-type Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query incidents where scores are not null": {
+      "main": [
+        [
+          {
+            "node": "Prep for OR API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep for OR API": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Executive-type Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executive-type Summary": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "88f191cc-eaeb-4f24-be5b-7e379092b66d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
+  },
+  "id": "leYZWfKj903T5zbM",
+  "tags": [
+    {
+      "updatedAt": "2025-12-10T03:42:49.636Z",
+      "createdAt": "2025-12-10T03:42:49.636Z",
+      "id": "YhZaSz2umH3ClIGu",
+      "name": "StatusWatch"
+    }
+  ]
+}

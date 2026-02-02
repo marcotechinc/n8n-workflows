@@ -64,7 +64,7 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "status_watch_incidents",
-        "limit": 500,
+        "limit": 100,
         "filterType": "string",
         "filterString": "=created_at=gte.{{ $now.minus({ hours: 168 }).toISO() }}&order=created_at.asc&select=id,incident_id,topic,summary,links,correlation_engine,created_at"
       },
@@ -148,7 +148,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "477bb94e-ab05-499a-85f1-0f20e058066d",
+  "versionId": "9e866daf-face-403a-9b24-244197277cdb",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
