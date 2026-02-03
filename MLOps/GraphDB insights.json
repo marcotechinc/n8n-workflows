@@ -47,8 +47,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        992,
-        160
+        576,
+        592
       ],
       "id": "ac0b4361-4a80-4d3d-99fa-bb291f7a4690",
       "name": "OpenAI Chat Model",
@@ -101,8 +101,8 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        992,
-        -16
+        576,
+        416
       ],
       "id": "41b3bf3a-8aaf-4984-a81e-b96d09e88085",
       "name": "What I should do?",
@@ -111,11 +111,11 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are given a set of incidents that have already been correlated\n(using EDA or DBSCAN).\n\nInterpret these correlations using a high-level executive / deal-maker lens.\n\nFocus on:\n- where risk is concentrating\n- which themes are reinforcing each other\n- what is becoming structurally important vs transient noise\n- what patterns suggest downstream impact\n\nRules:\n- Do NOT invent facts or external context.\n- Do NOT restate every incident.\n- Do NOT speculate beyond what the correlations support.\n- Prioritize signal over completeness.\n\n---\n\nCORRELATED INCIDENTS:\n{{ JSON.stringify($input.all().map(i => i.json), null, 2) }}\n\n---\n\nOutput format (use this structure exactly):\n\nTitle:\nExecutive signal assessment\n\nSection 1:\n2–3 sentences summarizing what the correlation pattern implies overall\n(e.g., where attention or risk is converging).\n\nSection 2:\nBullet points (max 6 total), each describing a meaningful signal or pattern.\nEach bullet should answer at least one of:\n- Why this matters now\n- What risk or leverage it creates\n- How multiple incidents reinforce the same theme",
+        "text": "=You are given a set of incidents that have already been correlated (EDA or DBSCAN).\n\nInterpret these correlations using a high-level executive / deal-maker lens.\n\nFocus on:\n- where risk is concentrating\n- which themes are reinforcing each other\n- what is becoming structurally important vs transient noise\n- what patterns suggest downstream impact\n\nRules:\n- Do NOT invent facts or external context.\n- Do NOT restate every incident.\n- Do NOT speculate beyond what the correlations support.\n- Prioritize signal over completeness.\n- You MUST reference incident_id values in the output.\n- Use incident_id exactly as provided.\n- Do NOT use labels like “Incident 1”, “the first incident”, etc.\n\n---\n\nCORRELATED INCIDENTS:\n{{ JSON.stringify($input.all().map(i => i.json), null, 2) }}\n\n---\n\nOutput format (use this structure exactly):\n\nTitle:\nExecutive signal assessment\n\nThemes:\n- <theme 1> (anchored by: <incident_id>, <incident_id>)\n- <theme 2> (anchored by: <incident_id>, <incident_id>)\n- <theme 3> (anchored by: <incident_id>)\n(optional, max 5 themes total)\n\nSection 1:\n2–3 sentences summarizing what the correlation pattern implies overall.\n\nSection 2:\nBullet points (max 6 total). Each bullet must include:\n- a short executive insight\n- AND “Evidence: <incident_id>, <incident_id>” (1–3 ids)\n\nUse this exact bullet format:\n\n- <insight>. Evidence: <incident_id>, <incident_id>",
         "messages": {
           "messageValues": [
             {
-              "message": "You are interpreting correlated incident data from the perspective of a senior decision-maker.\n\nYou do NOT invent facts.\nYou do NOT speculate beyond the provided data.\nYou do NOT summarize for completeness.\n\nYour role is to surface:\n- concentrated risk\n- reinforcing signals\n- emerging leverage points\n- second-order implications\n\nAssume the incidents have already been correlated correctly.\nYour job is to explain what the correlations imply for attention and action.\nUse clear, confident, executive-style language.\n"
+              "message": "You are interpreting correlated incident data from the perspective of a senior decision-maker.\n\nYou do NOT invent facts.\nYou do NOT speculate beyond the provided data.\nYou do NOT summarize for completeness.\n\nYour role is to surface:\n- concentrated risk\n- reinforcing signals\n- emerging leverage points\n- second-order implications\n\nYou MUST preserve and reference incident_id values from the input.\nIf you mention an incident, you must reference it by incident_id.\nNever label incidents as “Incident 1/2/3”.\nUse clear, confident, executive-style language."
             }
           ]
         },
@@ -142,6 +142,54 @@
       ],
       "id": "43ac3f4a-b1be-445e-b4e9-be56910ef1cc",
       "name": "Collapse items"
+    },
+    {
+      "parameters": {
+        "tableId": "status_watch_graphdb_insight_log",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "incident_ids",
+              "fieldValue": "={{ $json.incident_ids }}"
+            },
+            {
+              "fieldId": "themes",
+              "fieldValue": "={{ $json.themes }}"
+            },
+            {
+              "fieldId": "insight_text",
+              "fieldValue": "={{ $json.insight_text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -32
+      ],
+      "id": "6811f4b4-7d27-4259-aff5-e8c7d65f5e3b",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const llmText = $input.first().json.text;\n\n// ----------------------------\n// Parse THEMES + anchored incident_ids\n// ----------------------------\nconst themes = [];\nconst incidentIdSet = new Set();\n\nconst themesBlock = llmText.match(/Themes:\\n([\\s\\S]*?)\\n\\nSection 1:/);\n\nif (themesBlock) {\n  const themeLines = themesBlock[1]\n    .split('\\n')\n    .map(l => l.trim())\n    .filter(l => l.startsWith('- '));\n\n  for (const line of themeLines) {\n    // Example line:\n    // - AI ecosystem expansion (anchored by: id1, id2)\n    const match = line.match(/- (.*?) \\(anchored by: (.*?)\\)$/);\n    if (match) {\n      const themeName = match[1].trim();\n      const ids = match[2]\n        .split(',')\n        .map(i => i.trim())\n        .filter(Boolean);\n\n      themes.push(themeName);\n      ids.forEach(id => incidentIdSet.add(id));\n    }\n  }\n}\n\n// ----------------------------\n// Fallback: also parse Evidence blocks (Section 2)\n// ----------------------------\nconst evidenceMatches = [...llmText.matchAll(/Evidence:\\s*([a-zA-Z0-9_\\-.,\\s]+)/g)];\n\nfor (const match of evidenceMatches) {\n  match[1]\n    .split(',')\n    .map(i => i.trim())\n    .filter(Boolean)\n    .forEach(id => incidentIdSet.add(id));\n}\n\n// ----------------------------\n// Final payload for Supabase insert\n// ----------------------------\nreturn [\n  {\n    json: {\n      incident_ids: Array.from(incidentIdSet),\n      themes: themes.length ? themes : null,\n      insight_text: llmText\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -32
+      ],
+      "id": "f4745908-c7a8-4a27-8bde-5a81af7fe2e8",
+      "name": "Prep for DB-insert"
     }
   ],
   "pinData": {},
@@ -200,6 +248,28 @@
           }
         ]
       ]
+    },
+    "Executive-type Summary": {
+      "main": [
+        [
+          {
+            "node": "Prep for DB-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep for DB-insert": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -207,7 +277,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "02d641c1-e848-40eb-9155-c78fc6275c37",
+  "versionId": "dc8dcabd-c82d-4486-9905-d8f2952cc358",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"

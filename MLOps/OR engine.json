@@ -40,11 +40,11 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=The following incidents were selected by an optimization engine.\n\nContext:\n- The system operates under limited attention and bandwidth.\n- Selection favors incidents with the highest potential for risk,\n  leverage, and downstream impact.\n- Decisions are comparative within the provided set.\n\nExplain the outcome using a high-level executive / deal-maker lens.\n\nRules:\n- Refer to each incident by its incident_id.\n- Do NOT mention math, scores, weights, or formulas.\n- Do NOT invent criteria beyond what is implied by the context.\n- Do NOT use labels like “Incident 1” or “the first incident”.\n\n---\n\nSELECTED INCIDENTS:\n{{ JSON.stringify($json.selected, null, 2) }}\n\n---\n\nOutput format (use this structure exactly):\n\nTitle:\nExecutive decision summary\n\nSection 1:\nA short paragraph (2–3 sentences) explaining why THIS SET of incidents\nrepresents where attention should be focused now.\n\nSection 2:\nBullet points, one per incident, in this exact format:\n\n- <incident_id>: <one concise sentence explaining why this matters from a risk / leverage / impact perspective>",
+        "text": "=The following incidents were selected by an optimization engine.\n\nContext:\n\nThe system operates under limited attention and bandwidth.\nSelection favors incidents with the highest potential for risk, leverage, and downstream impact.\nDecisions are comparative within the provided set.\n\nYou MUST return JSON ONLY matching the required schema.\n\nInput (engine output):\n{{ JSON.stringify($json, null, 2) }}\n\nInstructions:\n\nSet or_version to the input’s or_v if present, otherwise \"v1\".\nSet max_items to the input’s max_items if present; otherwise use the length of selected.\n\nBuild:\n\nincident_ids: list of incident_id from selected (in order)\npriorities: map incident_id -> priority (if priority exists)\nfeatures: map incident_id -> features object (if features exists)\n\nWrite explanation_text:\n\n2–3 sentence overall summary (executive / deal-maker lens)\nthen bullets, one per incident, format: \"- <incident_id>: <reason>\"\n\nReturn JSON ONLY.",
         "messages": {
           "messageValues": [
             {
-              "message": "You are explaining decisions made by a deterministic optimization engine\nfrom the perspective of a senior decision-maker.\n\nYou do NOT make decisions.\nYou do NOT rescore or reorder items.\nYou do NOT invent new criteria.\n\nYour role is to frame the outcome in terms of:\n- risk\n- leverage\n- downstream impact\n- second-order consequences\n\nUse clear, confident, executive-style language.\nAvoid filler, hype, or academic tone.\nNever refer to items as “Incident 1”, “Incident A”, etc.\nAlways refer to items by their incident_id."
+              "message": "You are explaining the output of a deterministic optimization engine.\n\nRules:\n\nDo not invent facts or external context.\nDo not mention math, scores, weights, or formulas.\nDo not re-rank or change the chosen items.\nAlways preserve incident_id exactly as provided.\nOutput MUST be valid JSON ONLY (no markdown, no extra text).\n\nReturn JSON with this exact schema:\n\n{\n  \"or_version\": \"v1\",\n  \"max_items\": <integer>,\n  \"incident_ids\": [\"<incident_id>\", \"...\"],\n  \"priorities\": { \"<incident_id>\": <number>, ... },\n  \"features\": {\n    \"<incident_id>\": {\n      \"topic_weight\": <number>,\n      \"engine_weight\": <number>,\n      \"source_count\": <number>,\n      \"story_size\": <number>\n    },\n    ...\n  },\n  \"explanation_text\": \"<short executive narrative + per-incident bullets>\"\n}\n\nNotes:\n\nincident_ids must be in the same order as the input list.\nIf a field is missing in input, omit it from that incident’s features object (do not guess)."
             }
           ]
         },
@@ -125,6 +125,70 @@
       ],
       "id": "ad354147-bebe-4704-9ab5-eefbafca3ea6",
       "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "tableId": "status_watch_or_memory",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "incident_ids",
+              "fieldValue": "={{ $json.incident_ids }}"
+            },
+            {
+              "fieldId": "or_version",
+              "fieldValue": "={{ $json.or_version }}"
+            },
+            {
+              "fieldId": "max_items",
+              "fieldValue": "={{ $json.max_items }}"
+            },
+            {
+              "fieldId": "incident_ids",
+              "fieldValue": "={{ $json.incident_ids }}"
+            },
+            {
+              "fieldId": "priorities",
+              "fieldValue": "={{ $json.priorities }}"
+            },
+            {
+              "fieldId": "features",
+              "fieldValue": "={{ $json.features }}"
+            },
+            {
+              "fieldId": "explanation_text",
+              "fieldValue": "={{ $json.explanation_text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        -32
+      ],
+      "id": "4d231786-7f72-4f98-9792-5244b10453ff",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "k6NMY19byioyMjUc",
+          "name": "Supabase - Reset"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.text;\nconst parsed = JSON.parse(raw);\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -32
+      ],
+      "id": "00ed931e-e038-4e76-86f6-c07be5da37a8",
+      "name": "Prep for DB-insert"
     }
   ],
   "pinData": {},
@@ -186,7 +250,24 @@
     },
     "Executive-type Summary": {
       "main": [
-        []
+        [
+          {
+            "node": "Prep for DB-insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep for DB-insert": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
@@ -195,7 +276,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "88f191cc-eaeb-4f24-be5b-7e379092b66d",
+  "versionId": "a11e0f92-e9c9-46b2-a4e9-cb1e3f9d583c",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "0e1664e1c576ef52797abfb36899a10b94b3f051cdf548d41e9d265459c6a618"
