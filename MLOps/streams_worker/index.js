@@ -1,38 +1,41 @@
 import express from "express";
 import Redis from "ioredis";
 
+// CRASH GUARDS (Railway 502 fix)
+process.on("uncaughtException", (err) => {
+  console.error("uncaughtException:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("unhandledRejection:", reason);
+});
+
 const app = express();
 app.use(express.json());
 
-// Redis client (Railway internal)
+// Redis client (internal Railway)
 const redis = new Redis(process.env.REDIS_URL, {
-  enableOfflineQueue: false
+  enableOfflineQueue: false,
 });
 
-// REQUIRED: prevent crashes from Redis errors
+// REQUIRED: swallow Redis errors so process does NOT exit
 redis.on("error", (err) => {
   console.error("Redis error:", err.message);
 });
 
-// Health check
-app.get("/", (req, res) => {
-  res.send("ok");
-});
+// Health
+app.get("/", (_req, res) => res.send("ok"));
 
-// Event ingestion
+// Ingest
 app.post("/events", (req, res) => {
-  // Respond immediately to avoid Railway timeout
+  // Respond immediately so Railway never 502s
   res.json({ ok: true });
 
   // Fire-and-forget stream write
-  redis.xadd(
-    "events",
-    "*",
-    "payload",
-    JSON.stringify(req.body)
-  ).catch(err => {
-    console.error("XADD failed:", err.message);
-  });
+  redis
+    .xadd("events", "*", "payload", JSON.stringify(req.body))
+    .catch((err) => {
+      console.error("XADD failed:", err.message);
+    });
 });
 
 const PORT = process.env.PORT || 3000;
