@@ -7,18 +7,21 @@ app.use(express.json());
 const redis = new Redis(process.env.REDIS_URL);
 
 app.post("/events", async (req, res) => {
-  const event = req.body;
-
-  await redis.xadd(
-    "events",
-    "*",
-    "payload",
-    JSON.stringify(event)
-  );
-
-  res.send({ ok: true });
+  try {
+    await redis.xadd(
+      "events",
+      "*",
+      "payload",
+      JSON.stringify(req.body)
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false });
+  }
 });
 
-app.listen(3000, () => {
-  console.log("streams_worker listening on 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`streams_worker listening on ${PORT}`);
 });
